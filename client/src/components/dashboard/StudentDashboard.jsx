@@ -25,18 +25,6 @@ const StudentDashboard = () => {
 
     useEffect(() => {
         verifyAndLoadData();
-
-        // Add interval to check session periodically
-        const sessionCheckInterval = setInterval(() => {
-            verifySession().catch(error => {
-                console.error('Session check failed:', error);
-                if (error.message.includes('Session expired') || error.message.includes('Not logged in')) {
-                    navigate('/login');
-                }
-            });
-        }, 5 * 60 * 1000); // Check every 5 minutes
-
-        return () => clearInterval(sessionCheckInterval);
     }, [navigate]);
 
     const verifyAndLoadData = async () => {
@@ -58,24 +46,17 @@ const StudentDashboard = () => {
                 return;
             }
 
-            console.log('Verifying student session...');
             const sessionData = await verifySession();
-            console.log('Session verification response:', sessionData);
-
-            if (!sessionData.logged_in || sessionData.user_type !== 'student') {
-                console.log('Invalid session or user type, redirecting to login');
-                localStorage.removeItem('user');
-                navigate('/login');
+            if (sessionData.user_type !== 'student') {
+                console.log('User is not a student, redirecting to professor dashboard');
+                navigate('/professor/dashboard');
                 return;
             }
 
             await loadAssignments();
         } catch (error) {
             console.error('Session verification error:', error);
-            const errorMessage = error.message.includes('Session expired') || error.message.includes('Not logged in')
-                ? 'Your session has expired. Please log in again.'
-                : 'Failed to verify session. Please try logging in again.';
-            setError(errorMessage);
+            setError('Failed to verify session. Please try logging in again.');
             localStorage.removeItem('user');
             navigate('/login');
         } finally {
@@ -85,21 +66,12 @@ const StudentDashboard = () => {
 
     const loadAssignments = async () => {
         try {
-            console.log('Fetching student assignments...');
             const data = await fetchStudentAssignments();
             console.log('Assignments fetched:', data);
-
-            // Sort assignments by due date
-            const sortedAssignments = data.sort((a, b) => {
-                const dateA = new Date(a.due_date);
-                const dateB = new Date(b.due_date);
-                return dateA - dateB;
-            });
-
-            setAssignments(sortedAssignments);
+            setAssignments(data);
         } catch (error) {
             console.error('Error fetching assignments:', error);
-            setError('Failed to fetch assignments. Please try refreshing the page.');
+            setError('Failed to fetch assignments');
         }
     };
 
@@ -143,31 +115,14 @@ const StudentDashboard = () => {
         setIsSubmitModalOpen(true);
     };
 
-    const handleSubmissionComplete = async () => {
-        try {
-            // Reload assignments to get the latest status
-            await loadAssignments();
-
-            // Close the modal and clear selection
-            setIsSubmitModalOpen(false);
-            setSelectedAssignment(null);
-
-            // Show success message
-            const successMessage = document.createElement('div');
-            successMessage.className = 'success-toast';
-            successMessage.textContent = 'Assignment submitted successfully!';
-            document.body.appendChild(successMessage);
-
-            // Remove the success message after 3 seconds
-            setTimeout(() => {
-                if (document.body.contains(successMessage)) {
-                    document.body.removeChild(successMessage);
-                }
-            }, 3000);
-        } catch (error) {
-            console.error('Error updating assignments after submission:', error);
-            setError('Failed to refresh assignments. Please reload the page.');
-        }
+    const handleSubmissionComplete = (submission) => {
+        setAssignments(assignments.map(assignment =>
+            assignment.id === submission.assignment_id
+                ? { ...assignment, status: 'Submitted', progress: 100 }
+                : assignment
+        ));
+        setIsSubmitModalOpen(false);
+        setSelectedAssignment(null);
     };
 
     const handleLogout = async () => {

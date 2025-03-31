@@ -102,24 +102,17 @@ export const downloadAssignment = async (assignmentId) => {
     }
 };
 
-export const submitAssignment = async (assignmentId, file) => {
+export const submitAssignment = async (assignmentId, formData) => {
     try {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const response = await dashboardApi.post(`/assignments/${assignmentId}/submit`, formData, {
+        const response = await dashboardApi.post(`/assignments/submit/${assignmentId}`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data'
-            },
-            timeout: 60000 // Increase timeout for file upload to 60 seconds
+            }
         });
         return response.data;
     } catch (error) {
         console.error('Error submitting assignment:', error);
-        if (error.code === 'ECONNABORTED') {
-            throw new Error('Upload timed out. Please try again with a smaller file or check your connection.');
-        }
-        throw new Error(error.response?.data?.message || 'Failed to submit assignment');
+        throw new Error('Failed to submit assignment');
     }
 };
 
@@ -140,25 +133,5 @@ export const logout = async () => {
     } catch (error) {
         console.error('Logout error:', error);
         throw new Error('Failed to logout');
-    }
-};
-
-export const fetchProfessorAssignments = async () => {
-    try {
-        const response = await dashboardApi.get('/professor/assignments');
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching professor assignments:', error);
-        throw new Error('Failed to fetch assignments');
-    }
-};
-
-export const fetchSubmissions = async (assignmentId) => {
-    try {
-        const response = await dashboardApi.get(`/assignments/${assignmentId}/submissions`);
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching submissions:', error);
-        throw new Error('Failed to fetch submissions');
     }
 };

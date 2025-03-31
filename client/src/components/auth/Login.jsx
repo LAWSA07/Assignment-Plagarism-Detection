@@ -76,57 +76,68 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
+    if (!validateForm()) return;
+
     setIsLoading(true);
+    setError('');
 
     try {
-      console.log('Login attempt with:', { email: formData.email, password: formData.password, isStudent });
-      const response = await login(formData.email, formData.password, isStudent);
+      if (isLogin) {
+        // Show loading message
+        setError('Connecting to server... This might take a few moments on the first request.');
 
-      if (response.success) {
-        // Store user data
-        localStorage.setItem('user', JSON.stringify(response.user));
+        const user = await login({
+          email: formData.email.trim(),
+          password: formData.password,
+          isStudent: isStudent
+        });
 
-        // Show success message
-        const successMessage = document.createElement('div');
-        successMessage.className = 'success-toast';
-        successMessage.textContent = 'Login successful! Redirecting...';
-        document.body.appendChild(successMessage);
+        // Clear loading message
+        setError('');
 
-        // Remove success message after 2 seconds
-        setTimeout(() => {
-          if (document.body.contains(successMessage)) {
-            document.body.removeChild(successMessage);
-          }
-        }, 2000);
+        // Check if user type matches the portal type
+        if (isStudent && user.user_type === 'professor') {
+          setError('Please use the professor portal to login as a professor.');
+          return;
+        } else if (!isStudent && user.user_type === 'student') {
+          setError('Please use the student portal to login as a student.');
+          return;
+        }
 
-        // Redirect based on user type
-        setTimeout(() => {
-          if (response.user.user_type === 'student') {
-            navigate('/student/dashboard');
-          } else {
-            navigate('/professor/dashboard');
-          }
-        }, 1000);
+        // Navigate based on user type
+        if (user.user_type === 'professor') {
+          navigate('/professor/dashboard');
+        } else {
+          navigate('/student/dashboard');
+        }
       } else {
-        throw new Error(response.message || 'Login failed');
+        // Show loading message for registration
+        setError('Creating your account... This might take a few moments.');
+
+        await register({
+          email: formData.email.trim(),
+          password: formData.password,
+          firstName: formData.firstName.trim(),
+          lastName: formData.lastName.trim(),
+          isStudent,
+          section: isStudent ? formData.section.trim() : undefined
+        });
+
+        // Switch to login form after successful registration
+        setIsLogin(true);
+        setFormData({
+          email: '',
+          password: '',
+          firstName: '',
+          lastName: '',
+          confirmPassword: '',
+          section: ''
+        });
+        setError('Registration successful! Please login.');
       }
     } catch (error) {
       console.error('Auth error:', error);
-      setError(error.message || 'Login failed. Please try again.');
-
-      // Show error toast
-      const errorMessage = document.createElement('div');
-      errorMessage.className = 'error-toast';
-      errorMessage.textContent = error.message || 'Login failed. Please try again.';
-      document.body.appendChild(errorMessage);
-
-      // Remove error message after 3 seconds
-      setTimeout(() => {
-        if (document.body.contains(errorMessage)) {
-          document.body.removeChild(errorMessage);
-        }
-      }, 3000);
+      setError(error.message || 'An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
