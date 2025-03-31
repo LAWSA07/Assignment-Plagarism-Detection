@@ -13,8 +13,7 @@ const validateServer = async () => {
             timeout: 8000,
             headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'Origin': window.location.origin
+                'Content-Type': 'application/json'
             },
             withCredentials: true
         });
@@ -30,8 +29,7 @@ const validateServer = async () => {
             timeout: 8000,
             headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'Origin': window.location.origin
+                'Content-Type': 'application/json'
             },
             withCredentials: true
         });
@@ -66,8 +64,7 @@ const authApi = axios.create({
     baseURL: API_URL,
     headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Origin': window.location.origin
+        'Accept': 'application/json'
     },
     withCredentials: true,
     timeout: 30000 // 30 seconds
