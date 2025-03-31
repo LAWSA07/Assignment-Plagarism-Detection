@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Use the deployed API URL consistently
-const BASE_URL = 'https://assignment-plagarism-detection-1.onrender.com';
+const BASE_URL = 'https://assignment-plagarism-detection.onrender.com';
 
 // Construct the API URL
 const API_URL = `${BASE_URL}/api`;
@@ -49,7 +49,7 @@ api.interceptors.response.use(
 const validateServer = async () => {
     try {
         console.log('Trying health check at:', `${API_URL}/health`);
-        const response = await api.get('/health');
+        const response = await api.get('/api/health');
         console.log('Health check response:', response.data);
         return true;
     } catch (error) {
@@ -70,7 +70,7 @@ let isServerValidated = false;
 api.interceptors.request.use(
     async config => {
         // Skip validation for health endpoint
-        if (config.url === '/health') {
+        if (config.url === '/api/health') {
             return config;
         }
 
