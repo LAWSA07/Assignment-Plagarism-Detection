@@ -12,7 +12,7 @@ const ProfessorDashboard = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedSubmission, setSelectedSubmission] = useState(null);
     const [isPlagiarismModalOpen, setIsPlagiarismModalOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState('assignments');
+    const [setActiveTab] = useState('assignments');
 
     useEffect(() => {
         try {
@@ -22,14 +22,14 @@ const ProfessorDashboard = () => {
                 navigate('/login');
                 return;
             }
-            
+
             // Check if user is a professor
             if (user.user_type !== 'professor') {
                 console.log('User is not a professor, redirecting to student dashboard');
                 navigate('/student/dashboard');
                 return;
             }
-            
+
             verifySession();
         } catch (error) {
             console.error('Session verification error:', error);
@@ -84,7 +84,7 @@ const ProfessorDashboard = () => {
 
             const data = await response.json();
             setAssignments(data);
-            
+
             // Fetch submissions for each assignment
             data.forEach(assignment => {
                 fetchSubmissions(assignment.id);
@@ -152,7 +152,7 @@ const ProfessorDashboard = () => {
 
     const renderSubmissionsTable = (assignmentId) => {
         const assignmentSubmissions = submissions[assignmentId] || [];
-        
+
         if (assignmentSubmissions.length === 0) {
             return <p>No submissions yet</p>;
         }
@@ -179,7 +179,7 @@ const ProfessorDashboard = () => {
                         </div>
                         <div className="col">
                             {submission.processing_status === 'Completed' ? (
-                                <span 
+                                <span
                                     className={`plagiarism-score ${
                                         submission.plagiarism_score >= 70 ? 'high' :
                                         submission.plagiarism_score >= 40 ? 'medium' : 'low'
@@ -221,13 +221,13 @@ const ProfessorDashboard = () => {
                     <p className="stat-number">{stats.totalAssignments}</p>
                     <p className="stat-label">Created</p>
                 </div>
-                
+
                 <div className="stat-card">
                     <h3>Active Assignments</h3>
                     <p className="stat-number">{stats.activeAssignments}</p>
                     <p className="stat-label">In progress</p>
                 </div>
-                
+
                 <div className="stat-card">
                     <h3>Total Submissions</h3>
                     <p className="stat-number">{stats.totalSubmissions}</p>
@@ -297,4 +297,4 @@ const ProfessorDashboard = () => {
     );
 };
 
-export default ProfessorDashboard; 
+export default ProfessorDashboard;

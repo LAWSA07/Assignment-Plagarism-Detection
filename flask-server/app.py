@@ -28,7 +28,12 @@ app.config.from_object(Config)
 CORS(app,
      resources={
          r"/api/*": {
-             "origins": ["http://localhost:3000", "http://localhost:3001"],
+             "origins": [
+                 "http://localhost:3000",
+                 "http://localhost:3001",
+                 "https://*.vercel.app",  # Allow all Vercel preview deployments
+                 "https://your-frontend-domain.com"  # Replace with your actual Vercel domain
+             ],
              "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
              "allow_headers": ["Content-Type", "Authorization"],
              "supports_credentials": True,
@@ -42,14 +47,7 @@ try:
     if not mongodb_uri:
         raise ValueError("MONGODB_URI environment variable is not set")
 
-    # Adding explicit TLS/SSL options to fix handshake error
-    connect(
-        host=mongodb_uri,
-        ssl=True,
-        ssl_cert_reqs=None,  # Don't verify certificate
-        tls=True,
-        tlsAllowInvalidCertificates=True
-    )
+    connect(host=mongodb_uri)
     logger.info("Successfully connected to MongoDB Atlas")
 except Exception as e:
     logger.error(f"Failed to connect to MongoDB: {e}")

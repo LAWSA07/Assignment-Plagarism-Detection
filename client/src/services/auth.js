@@ -19,10 +19,10 @@ authApi.interceptors.request.use(
         if (config.url === '/health') {
             return config;
         }
-        
+
         try {
             // Try to connect to server
-            await axios.get(`${API_URL}/health`, { 
+            await axios.get(`${API_URL}/health`, {
                 timeout: 3000,
                 withCredentials: true
             });
@@ -157,4 +157,4 @@ export const isAuthenticated = () => {
 
 export const getToken = () => {
     return localStorage.getItem('token');
-}; 
+};

@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: assignment-checker-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn flask-server.app:app
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.9.0
