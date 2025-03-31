@@ -9,7 +9,7 @@ const API_URL = `${BASE_URL}/api`;
 console.log('Using API URL:', API_URL);
 
 // Create axios instance with default config
-const api = axios.create({
+export const api = axios.create({
     baseURL: API_URL,
     timeout: 30000,
     withCredentials: true,
@@ -186,4 +186,38 @@ export const isAuthenticated = () => {
 
 export const getToken = () => {
     return localStorage.getItem('token');
+};
+
+// Professor-specific functions
+export const fetchProfessorAssignments = async () => {
+    try {
+        const response = await api.get('/professor/assignments');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching professor assignments:', error);
+        throw error;
+    }
+};
+
+// Student-specific functions
+export const fetchStudentAssignments = async () => {
+    try {
+        const response = await api.get('/student/assignments');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching student assignments:', error);
+        throw error;
+    }
+};
+
+export const downloadAssignment = async (assignmentId) => {
+    try {
+        const response = await api.get(`/assignments/${assignmentId}/download`, {
+            responseType: 'blob'
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error downloading assignment:', error);
+        throw error;
+    }
 };

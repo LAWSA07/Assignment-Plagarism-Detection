@@ -3,7 +3,6 @@ import { api } from '../../services/auth';
 import './Dashboard.css';
 
 const ALLOWED_FILE_TYPES = ['application/pdf'];
-const API_BASE_URL = 'http://localhost:5000';
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 const CreateAssignmentModal = ({ isOpen, onClose, onAssignmentCreated }) => {
@@ -110,9 +109,39 @@ const CreateAssignmentModal = ({ isOpen, onClose, onAssignmentCreated }) => {
     setError('');
 
     try {
-      const response = await api.post('/assignments/create', formData);
+      if (!validateForm()) {
+        setIsSubmitting(false);
+        return;
+      }
+
+      const formDataToSend = new FormData();
+      formDataToSend.append('name', formData.name.trim());
+      formDataToSend.append('course', formData.course.trim());
+      formDataToSend.append('description', formData.description.trim());
+      formDataToSend.append('due_date', formData.due_date);
+      formDataToSend.append('question_file', formData.question_file);
+      formData.sections.forEach(section => {
+        formDataToSend.append('sections[]', section);
+      });
+
+      const response = await api.post('/assignments/create', formDataToSend, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
       onAssignmentCreated(response.data);
       onClose();
+
+      // Reset form
+      setFormData({
+        name: '',
+        course: '',
+        description: '',
+        due_date: '',
+        question_file: null,
+        sections: []
+      });
     } catch (error) {
       console.error('Error creating assignment:', error);
       setError(error.response?.data?.message || 'Failed to create assignment');

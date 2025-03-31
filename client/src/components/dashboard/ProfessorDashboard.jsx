@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import CreateAssignmentModal from './CreateAssignmentModal';
 import PlagiarismReportModal from './PlagiarismReportModal';
 import './Dashboard.css';
-import { verifySession, fetchProfessorAssignments, logout, api } from '../../services/auth';
+import { checkSession, fetchProfessorAssignments, logout, api } from '../../services/auth';
 
 const ProfessorDashboard = () => {
     const navigate = useNavigate();
@@ -21,7 +21,7 @@ const ProfessorDashboard = () => {
         const verifyAndLoadData = async () => {
             try {
                 console.log('Verifying professor session...');
-                const sessionData = await verifySession();
+                const sessionData = await checkSession();
                 console.log('Session data:', sessionData);
 
                 if (!sessionData.logged_in || !sessionData.user) {

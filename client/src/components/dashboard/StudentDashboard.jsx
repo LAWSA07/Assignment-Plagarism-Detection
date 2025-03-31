@@ -1,12 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SubmitAssignmentModal from './SubmitAssignmentModal';
-import {
-    verifySession,
-    fetchStudentAssignments,
-    downloadAssignment,
-    logout
-} from '../../services/dashboard';
+import { checkSession, fetchStudentAssignments, downloadAssignment, logout } from '../../services/auth';
 import './Dashboard.css';
 
 const StudentDashboard = () => {
@@ -27,7 +22,7 @@ const StudentDashboard = () => {
         const verifyAndLoadData = async () => {
             try {
                 console.log('Verifying student session...');
-                const sessionData = await verifySession();
+                const sessionData = await checkSession();
                 console.log('Session data:', sessionData);
 
                 if (!sessionData.logged_in || !sessionData.user) {
