@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: assignment-management-api
+    env: python
+    region: oregon  # Choose your preferred region
+    buildCommand: cd flask-server && pip install -r requirements.txt
+    startCommand: cd flask-server && gunicorn app:app --bind 0.0.0.0:$PORT --workers 4
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.0
+      - key: FLASK_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false  # This will be set in the Render dashboard
+      - key: SECRET_KEY
+        generateValue: true
+    healthCheckPath: /api/health
+    autoDeploy: true

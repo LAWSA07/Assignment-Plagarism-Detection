@@ -11,6 +11,17 @@ console.log('API Configuration:', {
     origin: window.location.origin
 });
 
+// Create axios instance with default config
+const authApi = axios.create({
+    baseURL: API_URL,
+    headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    },
+    withCredentials: true,
+    timeout: 30000 // 30 seconds
+});
+
 // Function to validate the server is running
 const validateServer = async () => {
     try {
@@ -20,8 +31,7 @@ const validateServer = async () => {
             timeout: 10000,
             headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'Origin': window.location.origin
+                'Content-Type': 'application/json'
             },
             withCredentials: true
         });
@@ -52,18 +62,6 @@ const validateServer = async () => {
         throw new Error(`Server validation failed: ${error.message}`);
     }
 };
-
-// Create axios instance with default config
-const authApi = axios.create({
-    baseURL: API_URL,
-    headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Origin': window.location.origin
-    },
-    withCredentials: true,
-    timeout: 30000 // 30 seconds
-});
 
 let isServerValidated = false;
 
@@ -103,7 +101,6 @@ authApi.interceptors.response.use(
             config: error.config
         });
 
-        // Handle specific error cases
         if (error.code === 'ECONNABORTED') {
             throw new Error('Request timed out. The server might be starting up, please try again in a few moments.');
         } else if (error.response?.status === 404) {
