@@ -4,6 +4,8 @@ import axios from 'axios';
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const API_URL = `${BASE_URL}/api`;
 
+console.log('Using API URL:', API_URL); // Debug log
+
 // Create axios instance with default config
 const dashboardApi = axios.create({
     baseURL: API_URL,
@@ -14,6 +16,30 @@ const dashboardApi = axios.create({
     withCredentials: true,
     timeout: 30000 // 30 seconds
 });
+
+// Add request interceptor for debugging
+dashboardApi.interceptors.request.use(request => {
+    console.log('Starting Request:', request.url);
+    return request;
+});
+
+// Add response interceptor for debugging
+dashboardApi.interceptors.response.use(
+    response => {
+        console.log('Response:', response.status, response.data);
+        return response;
+    },
+    error => {
+        console.error('API Error:', {
+            url: error.config?.url,
+            method: error.config?.method,
+            status: error.response?.status,
+            data: error.response?.data,
+            message: error.message
+        });
+        return Promise.reject(error);
+    }
+);
 
 export const verifySession = async () => {
     try {
