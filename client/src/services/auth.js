@@ -1,7 +1,9 @@
 import axios from 'axios';
 
 // Get the base URL from environment variables
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const BASE_URL = process.env.NODE_ENV === 'production'
+    ? 'https://assignment-plagarism-detection-1.onrender.com'
+    : process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const PORT = process.env.REACT_APP_PORT || '5000';
 
 // Construct the API URL
@@ -25,7 +27,8 @@ const api = axios.create({
 api.interceptors.request.use(
     (config) => {
         console.log('Making request to:', config.url);
-        console.log('Request headers:', config.headers);
+        // Remove the Origin header as it's automatically set by the browser
+        delete config.headers['Origin'];
         return config;
     },
     (error) => {
