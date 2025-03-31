@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { api } from '../../services/auth';
 import './Dashboard.css';
 
 const ProfessorProfile = () => {
+    const navigate = useNavigate();
     const [profile, setProfile] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState({
@@ -22,29 +25,32 @@ const ProfessorProfile = () => {
 
     const fetchProfile = async () => {
         try {
-            const response = await fetch('http://localhost:5000/api/professor/profile', {
-                credentials: 'include'
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch profile');
-            }
-
-            const data = await response.json();
-            setProfile(data);
+            const response = await api.get('/professor/profile');
+            setProfile(response.data);
             setEditForm({
-                first_name: data.first_name || '',
-                last_name: data.last_name || '',
-                email: data.email || '',
-                department: data.department || '',
-                office_hours: data.office_hours || '',
-                office_location: data.office_location || ''
+                first_name: response.data.first_name || '',
+                last_name: response.data.last_name || '',
+                email: response.data.email || '',
+                department: response.data.department || '',
+                office_hours: response.data.office_hours || '',
+                office_location: response.data.office_location || ''
             });
         } catch (error) {
             console.error('Error fetching profile:', error);
             setError('Failed to load profile');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleLogout = async () => {
+        try {
+            await api.post('/logout');
+            localStorage.removeItem('user');
+            navigate('/login');
+        } catch (error) {
+            console.error('Logout error:', error);
+            setError('Failed to logout');
         }
     };
 
@@ -62,26 +68,12 @@ const ProfessorProfile = () => {
         setError('');
 
         try {
-            const response = await fetch('http://localhost:5000/api/professor/profile/update', {
-                method: 'PUT',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(editForm)
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to update profile');
-            }
-
-            const updatedProfile = await response.json();
-            setProfile(updatedProfile);
+            const response = await api.put('/professor/profile/update', editForm);
+            setProfile(response.data);
             setIsEditing(false);
         } catch (error) {
             console.error('Error updating profile:', error);
-            setError(error.message || 'Failed to update profile');
+            setError(error.response?.data?.message || 'Failed to update profile');
         } finally {
             setIsSaving(false);
         }
@@ -101,21 +93,58 @@ const ProfessorProfile = () => {
         );
     }
 
+    if (!profile) {
+        return <div>No profile data available</div>;
+    }
+
     return (
         <div className="profile-container">
             <div className="profile-header">
-                <h2>Professor Profile</h2>
-                {!isEditing && (
-                    <button 
-                        className="edit-btn"
-                        onClick={() => setIsEditing(true)}
-                    >
-                        Edit Profile
-                    </button>
-                )}
+                <h1>Professor Profile</h1>
+                <button className="logout-btn" onClick={handleLogout}>
+                    Logout
+                </button>
             </div>
 
-            {isEditing ? (
+            <div className="profile-content">
+                <div className="profile-section">
+                    <h2>Personal Information</h2>
+                    <div className="profile-info">
+                        <p><strong>Name:</strong> {profile.first_name} {profile.last_name}</p>
+                        <p><strong>Email:</strong> {profile.email}</p>
+                        <p><strong>Department:</strong> {profile.department}</p>
+                        <p><strong>Position:</strong> {profile.position}</p>
+                    </div>
+                </div>
+
+                <div className="profile-section">
+                    <h2>Contact Information</h2>
+                    <div className="profile-info">
+                        <p><strong>Office:</strong> {profile.office}</p>
+                        <p><strong>Phone:</strong> {profile.phone}</p>
+                        <p><strong>Office Hours:</strong> {profile.office_hours}</p>
+                    </div>
+                </div>
+
+                <div className="profile-section">
+                    <h2>Teaching Information</h2>
+                    <div className="profile-info">
+                        <p><strong>Courses:</strong> {profile.courses.join(', ')}</p>
+                        <p><strong>Research Areas:</strong> {profile.research_areas.join(', ')}</p>
+                    </div>
+                </div>
+            </div>
+
+            {!isEditing && (
+                <button
+                    className="edit-btn"
+                    onClick={() => setIsEditing(true)}
+                >
+                    Edit Profile
+                </button>
+            )}
+
+            {isEditing && (
                 <form onSubmit={handleSubmit} className="profile-form">
                     <div className="form-group">
                         <label htmlFor="first_name">First Name</label>
@@ -216,63 +245,9 @@ const ProfessorProfile = () => {
                         </button>
                     </div>
                 </form>
-            ) : (
-                <div className="profile-details">
-                    <div className="profile-section">
-                        <h3>Personal Information</h3>
-                        <div className="info-grid">
-                            <div className="info-item">
-                                <span className="label">Name:</span>
-                                <span className="value">{profile.first_name} {profile.last_name}</span>
-                            </div>
-                            <div className="info-item">
-                                <span className="label">Email:</span>
-                                <span className="value">{profile.email}</span>
-                            </div>
-                            <div className="info-item">
-                                <span className="label">Department:</span>
-                                <span className="value">{profile.department || 'Not specified'}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="profile-section">
-                        <h3>Contact Information</h3>
-                        <div className="info-grid">
-                            <div className="info-item">
-                                <span className="label">Office Hours:</span>
-                                <span className="value">{profile.office_hours || 'Not specified'}</span>
-                            </div>
-                            <div className="info-item">
-                                <span className="label">Office Location:</span>
-                                <span className="value">{profile.office_location || 'Not specified'}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="profile-section">
-                        <h3>Statistics</h3>
-                        <div className="info-grid">
-                            <div className="info-item">
-                                <span className="label">Active Assignments:</span>
-                                <span className="value">{profile.active_assignments || 0}</span>
-                            </div>
-                            <div className="info-item">
-                                <span className="label">Total Students:</span>
-                                <span className="value">{profile.total_students || 0}</span>
-                            </div>
-                            <div className="info-item">
-                                <span className="label">Member Since:</span>
-                                <span className="value">
-                                    {new Date(profile.created_at).toLocaleDateString()}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             )}
         </div>
     );
 };
 
-export default ProfessorProfile; 
+export default ProfessorProfile;

@@ -1,15 +1,11 @@
 import axios from 'axios';
 
-// Get the base URL from environment variables
-const BASE_URL = process.env.NODE_ENV === 'production'
-    ? 'https://assignment-plagarism-detection-1.onrender.com'
-    : process.env.REACT_APP_API_URL || 'http://localhost:5000';
-const PORT = process.env.REACT_APP_PORT || '5000';
+// Use the deployed API URL consistently
+const BASE_URL = 'https://assignment-plagarism-detection-1.onrender.com';
 
 // Construct the API URL
 const API_URL = `${BASE_URL}/api`;
 
-console.log('Environment:', process.env.NODE_ENV);
 console.log('Using API URL:', API_URL);
 
 // Create axios instance with default config
