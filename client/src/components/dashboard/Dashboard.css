@@ -363,12 +363,12 @@ body {
   .dashboard-container {
     padding: 1rem;
   }
-  
+
   .table-header,
   .table-row {
     grid-template-columns: 2fr 1fr 1fr 1fr;
   }
-  
+
   .col:nth-child(5),
   .col:nth-child(6) {
     display: none;
@@ -379,13 +379,13 @@ body {
   .stats-container {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   }
-  
+
   .table-header,
   .table-row {
     grid-template-columns: 2fr 1fr 1fr;
     gap: 0.5rem;
   }
-  
+
   .col:nth-child(2),
   .col:nth-child(5) {
     display: none;
@@ -413,12 +413,12 @@ body {
   .col:not(:first-child):not(:last-child) {
     display: none;
   }
-  
+
   .actions {
     flex-direction: column;
     width: 100%;
   }
-  
+
   .action-btn {
     width: 100%;
     text-align: center;
@@ -804,7 +804,7 @@ tr:last-child td {
   .file-upload-label {
     border: 2px solid ButtonText;
   }
-  
+
   .error {
     border-color: Mark;
   }
@@ -1003,4 +1003,62 @@ tr:last-child td {
     .save-btn, .cancel-btn {
         width: 100%;
     }
-} 
+}
+
+.success-toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #2ecc71;
+    color: white;
+    padding: 15px 25px;
+    border-radius: 5px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 9999;
+    animation: slideIn 0.3s ease-out;
+    font-weight: 500;
+    min-width: 200px;
+    text-align: center;
+}
+
+.error-toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #e74c3c;
+    color: white;
+    padding: 15px 25px;
+    border-radius: 5px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 9999;
+    animation: slideIn 0.3s ease-out;
+    font-weight: 500;
+    min-width: 200px;
+    text-align: center;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+.toast-exit {
+    animation: slideOut 0.3s ease-in forwards;
+}

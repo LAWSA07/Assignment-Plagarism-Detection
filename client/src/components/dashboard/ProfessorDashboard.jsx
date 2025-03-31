@@ -2,6 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CreateAssignmentModal from './CreateAssignmentModal';
 import PlagiarismReportModal from './PlagiarismReportModal';
+import {
+    verifySession,
+    fetchProfessorAssignments,
+    fetchSubmissions,
+    logout
+} from '../../services/dashboard';
 import './Dashboard.css';
 
 const ProfessorDashboard = () => {
@@ -12,10 +18,18 @@ const ProfessorDashboard = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedSubmission, setSelectedSubmission] = useState(null);
     const [isPlagiarismModalOpen, setIsPlagiarismModalOpen] = useState(false);
+    const [error, setError] = useState(null);
     const [setActiveTab] = useState('assignments');
 
     useEffect(() => {
+        verifyAndLoadData();
+    }, [navigate]);
+
+    const verifyAndLoadData = async () => {
         try {
+            setIsLoading(true);
+            setError(null);
+
             const user = JSON.parse(localStorage.getItem('user'));
             if (!user) {
                 console.log('No user found, redirecting to login');
@@ -30,83 +44,42 @@ const ProfessorDashboard = () => {
                 return;
             }
 
-            verifySession();
-        } catch (error) {
-            console.error('Session verification error:', error);
-            navigate('/login');
-        }
-    }, [navigate]);
-
-    const verifySession = async () => {
-        try {
-            console.log('Verifying professor session...');
-            const response = await fetch('http://localhost:5000/api/check-session', {
-                credentials: 'include'
-            });
-
-            if (!response.ok) {
-                throw new Error('Session verification failed');
-            }
-
-            const data = await response.json();
-            console.log('Session check response:', data);
-
-            if (!data.logged_in) {
-                console.log('Not logged in, redirecting to login');
-                localStorage.removeItem('user');
-                navigate('/login');
-                return;
-            }
-
-            if (data.user_type !== 'professor') {
+            const sessionData = await verifySession();
+            if (sessionData.user_type !== 'professor') {
                 console.log('User is not a professor, redirecting to student dashboard');
                 navigate('/student/dashboard');
                 return;
             }
 
-            fetchAssignments();
+            await loadAssignments();
         } catch (error) {
             console.error('Session verification error:', error);
+            setError('Failed to verify session. Please try logging in again.');
             localStorage.removeItem('user');
             navigate('/login');
-        }
-    };
-
-    const fetchAssignments = async () => {
-        try {
-            const response = await fetch('http://localhost:5000/api/professor/assignments', {
-                credentials: 'include'
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch assignments');
-            }
-
-            const data = await response.json();
-            setAssignments(data);
-
-            // Fetch submissions for each assignment
-            data.forEach(assignment => {
-                fetchSubmissions(assignment.id);
-            });
-        } catch (error) {
-            console.error('Error fetching assignments:', error);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const fetchSubmissions = async (assignmentId) => {
+    const loadAssignments = async () => {
         try {
-            const response = await fetch(`http://localhost:5000/api/assignments/${assignmentId}/submissions`, {
-                credentials: 'include'
+            const data = await fetchProfessorAssignments();
+            setAssignments(data);
+
+            // Fetch submissions for each assignment
+            data.forEach(assignment => {
+                loadSubmissions(assignment.id);
             });
+        } catch (error) {
+            console.error('Error fetching assignments:', error);
+            setError('Failed to fetch assignments');
+        }
+    };
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch submissions');
-            }
-
-            const data = await response.json();
+    const loadSubmissions = async (assignmentId) => {
+        try {
+            const data = await fetchSubmissions(assignmentId);
             setSubmissions(prev => ({
                 ...prev,
                 [assignmentId]: data
@@ -118,17 +91,12 @@ const ProfessorDashboard = () => {
 
     const handleLogout = async () => {
         try {
-            const response = await fetch('http://localhost:5000/api/logout', {
-                method: 'POST',
-                credentials: 'include'
-            });
-
-            if (response.ok) {
-                localStorage.removeItem('user');
-                navigate('/login');
-            }
+            await logout();
+            localStorage.removeItem('user');
+            navigate('/login');
         } catch (error) {
             console.error('Logout failed:', error);
+            alert('Failed to logout. Please try again.');
         }
     };
 
