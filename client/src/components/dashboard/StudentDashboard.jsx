@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SubmitAssignmentModal from './SubmitAssignmentModal';
-import { verifySession, fetchStudentAssignments, downloadAssignment, logout } from '../../services/dashboard';
+import {
+    verifySession,
+    fetchStudentAssignments,
+    downloadAssignment,
+    logout
+} from '../../services/dashboard';
 import './Dashboard.css';
 
 const StudentDashboard = () => {
@@ -24,6 +29,9 @@ const StudentDashboard = () => {
 
     const verifyAndLoadData = async () => {
         try {
+            setIsLoading(true);
+            setError(null);
+
             const user = JSON.parse(localStorage.getItem('user'));
             if (!user) {
                 console.log('No user found, redirecting to login');
@@ -47,23 +55,23 @@ const StudentDashboard = () => {
 
             await loadAssignments();
         } catch (error) {
-            setError('Failed to verify session. Please try logging in again.');
             console.error('Session verification error:', error);
+            setError('Failed to verify session. Please try logging in again.');
+            localStorage.removeItem('user');
             navigate('/login');
+        } finally {
+            setIsLoading(false);
         }
     };
 
     const loadAssignments = async () => {
         try {
-            setIsLoading(true);
             const data = await fetchStudentAssignments();
             console.log('Assignments fetched:', data);
             setAssignments(data);
         } catch (error) {
             console.error('Error fetching assignments:', error);
             setError('Failed to fetch assignments');
-        } finally {
-            setIsLoading(false);
         }
     };
 

@@ -17,7 +17,7 @@ const SubmitAssignmentModal = ({ isOpen, onClose, assignment, onSubmissionComple
     setProcessingResults(null);
   };
 
-  const checkProcessingStatus = async (submissionId) => {
+  const handleProcessingStatus = async (submissionId) => {
     try {
       const data = await checkSubmissionStatus(submissionId);
       setProcessingStatus(data.processing_status);
@@ -31,7 +31,7 @@ const SubmitAssignmentModal = ({ isOpen, onClose, assignment, onSubmissionComple
         setError(data.processing_error || 'Processing failed');
       } else if (data.processing_status === 'Processing') {
         // Continue checking status
-        setTimeout(() => checkProcessingStatus(submissionId), 2000);
+        setTimeout(() => handleProcessingStatus(submissionId), 2000);
       }
     } catch (error) {
       console.error('Error checking processing status:', error);
@@ -63,7 +63,7 @@ const SubmitAssignmentModal = ({ isOpen, onClose, assignment, onSubmissionComple
 
       // Start checking processing status
       if (submission.processing_status === 'Pending' || submission.processing_status === 'Processing') {
-        setTimeout(() => checkProcessingStatus(submission.id), 2000);
+        setTimeout(() => handleProcessingStatus(submission.id), 2000);
       }
 
       onSubmissionComplete(submission);
