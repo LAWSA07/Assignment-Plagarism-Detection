@@ -4,6 +4,7 @@ from models.user import User
 import logging
 from datetime import datetime
 from mongoengine.errors import NotUniqueError, ValidationError
+from flask_cors import cross_origin
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -11,8 +12,12 @@ logger = logging.getLogger(__name__)
 
 auth_bp = Blueprint('auth', __name__)
 
-@auth_bp.route('/api/register', methods=['POST'])
+@auth_bp.route('/register', methods=['POST', 'OPTIONS'])
+@cross_origin(supports_credentials=True)
 def register():
+    if request.method == 'OPTIONS':
+        return handle_preflight()
+
     try:
         data = request.get_json()
         if not data:
@@ -82,8 +87,12 @@ def register():
         logger.error(f"Registration error: {str(e)}")
         return jsonify({'error': 'Registration failed', 'details': str(e)}), 500
 
-@auth_bp.route('/api/login', methods=['POST'])
+@auth_bp.route('/login', methods=['POST', 'OPTIONS'])
+@cross_origin(supports_credentials=True)
 def login():
+    if request.method == 'OPTIONS':
+        return handle_preflight()
+
     try:
         data = request.get_json()
         if not data:
@@ -138,8 +147,12 @@ def login():
         logger.error(f"Login error: {str(e)}")
         return jsonify({'error': 'Login failed'}), 500
 
-@auth_bp.route('/api/check-session', methods=['GET'])
+@auth_bp.route('/check-session', methods=['GET', 'OPTIONS'])
+@cross_origin(supports_credentials=True)
 def check_session():
+    if request.method == 'OPTIONS':
+        return handle_preflight()
+
     try:
         user_id = session.get('user_id')
         if not user_id:
@@ -166,8 +179,12 @@ def check_session():
         logger.error(f"Session check error: {str(e)}")
         return jsonify({'error': 'Session check failed'}), 500
 
-@auth_bp.route('/api/logout', methods=['POST'])
+@auth_bp.route('/logout', methods=['POST', 'OPTIONS'])
+@cross_origin(supports_credentials=True)
 def logout():
+    if request.method == 'OPTIONS':
+        return handle_preflight()
+
     try:
         session.clear()
         return jsonify({
@@ -180,9 +197,11 @@ def logout():
 
 def handle_preflight():
     response = jsonify({'message': 'Preflight request handled'})
-    response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-    return response, 200
+    response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin'))
+    response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
 
 # Authentication middleware
 def token_required(f):

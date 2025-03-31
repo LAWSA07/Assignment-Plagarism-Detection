@@ -24,10 +24,10 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.config.from_object(Config)
 
-# Configure CORS with more permissive settings for development
+# Configure CORS with more permissive settings
 CORS(app,
      resources={
-         r"/*": {  # Changed from /api/* to /* to match all routes
+         r"/*": {
              "origins": [
                  "http://localhost:3000",
                  "http://localhost:3001",
@@ -37,7 +37,8 @@ CORS(app,
              "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
              "allow_headers": ["Content-Type", "Authorization"],
              "supports_credentials": True,
-             "expose_headers": ["Content-Type", "Authorization"]
+             "expose_headers": ["Content-Type", "Authorization"],
+             "max_age": 3600
          }
      })
 
@@ -47,11 +48,10 @@ try:
     if not mongodb_uri:
         raise ValueError("MONGODB_URI environment variable is not set")
 
-    # Adding explicit TLS/SSL options to fix handshake error
     connect(
         host=mongodb_uri,
         ssl=True,
-        ssl_cert_reqs=None,  # Don't verify certificate
+        ssl_cert_reqs=None,
         tls=True,
         tlsAllowInvalidCertificates=True
     )
@@ -69,9 +69,9 @@ app.register_blueprint(auth_bp, url_prefix='/api')
 app.register_blueprint(users_bp, url_prefix='/api')
 
 # Configure session
-app.config['SESSION_COOKIE_SECURE'] = True  # Changed to True for production
+app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Changed to None for cross-site requests
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'
 app.permanent_session_lifetime = timedelta(days=1)
 
 # Set secret key from environment variable
@@ -94,14 +94,18 @@ def after_request(response):
             'Access-Control-Allow-Origin': origin,
             'Access-Control-Allow-Credentials': 'true',
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'Access-Control-Max-Age': '3600'
         })
     return response
 
-@app.route('/health', methods=['GET'])
-@app.route('/api/health', methods=['GET'])
+@app.route('/health', methods=['GET', 'OPTIONS'])
+@app.route('/api/health', methods=['GET', 'OPTIONS'])
 def health_check():
     """Health check endpoint to verify server status"""
+    if request.method == 'OPTIONS':
+        response = jsonify({'message': 'Preflight request handled'})
+        return response
     return jsonify({
         'status': 'healthy',
         'message': 'Server is running'

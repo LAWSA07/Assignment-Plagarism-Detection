@@ -12,6 +12,13 @@ const authApi = axios.create({
     timeout: 10000 // 10 second timeout
 });
 
+// Create a separate instance for health checks to avoid infinite loops
+const healthApi = axios.create({
+    baseURL: API_URL,
+    timeout: 3000,
+    withCredentials: true
+});
+
 // Add request interceptor for error handling
 authApi.interceptors.request.use(
     async config => {
@@ -21,15 +28,15 @@ authApi.interceptors.request.use(
         }
 
         try {
-            // Try to connect to server
-            await axios.get(`${API_URL}/health`, {
-                timeout: 3000,
-                withCredentials: true
-            });
+            // Try to connect to server using the health check instance
+            const healthResponse = await healthApi.get('/health');
+            console.log('Health check response:', healthResponse.data);
             return config;
         } catch (error) {
             console.error('Server health check failed:', error);
-            if (error.code === 'ERR_NETWORK') {
+            if (error.response?.status === 404) {
+                throw new Error('API endpoint not found. Please check the server configuration.');
+            } else if (error.code === 'ERR_NETWORK') {
                 throw new Error('Unable to connect to server. Please make sure the server is running.');
             } else if (error.code === 'ECONNABORTED') {
                 throw new Error('Server connection timed out. Please try again.');
@@ -45,11 +52,15 @@ authApi.interceptors.response.use(
     response => response,
     error => {
         console.error('API Error:', error);
-        if (error.code === 'ERR_NETWORK') {
+        if (error.response?.status === 404) {
+            throw new Error('API endpoint not found. Please check the URL.');
+        } else if (error.code === 'ERR_NETWORK') {
             throw new Error('Network error. Please check your connection and try again.');
-        }
-        if (error.response?.status === 401) {
+        } else if (error.response?.status === 401) {
             localStorage.removeItem('user');
+            throw new Error(error.response.data?.error || 'Authentication failed');
+        } else if (error.response?.data?.error) {
+            throw new Error(error.response.data.error);
         }
         throw error;
     }
@@ -58,6 +69,7 @@ authApi.interceptors.response.use(
 export const register = async (userData) => {
     try {
         console.log('Registering user:', userData);
+        console.log('Using API URL:', API_URL);
         const response = await authApi.post('/register', userData);
         console.log('Registration response:', response.data);
 
@@ -69,19 +81,14 @@ export const register = async (userData) => {
         }
     } catch (error) {
         console.error('Registration error:', error);
-        if (error.response?.data?.error) {
-            throw new Error(error.response.data.error);
-        } else if (error.message) {
-            throw new Error(error.message);
-        } else {
-            throw new Error('Registration failed. Please try again.');
-        }
+        throw error;
     }
 };
 
 export const login = async (credentials) => {
     try {
         console.log('Login attempt with:', credentials);
+        console.log('Using API URL:', API_URL);
         const response = await authApi.post('/login', credentials);
         console.log('Login response:', response.data);
 
@@ -93,13 +100,7 @@ export const login = async (credentials) => {
         }
     } catch (error) {
         console.error('Login error:', error);
-        if (error.response?.data?.error) {
-            throw new Error(error.response.data.error);
-        } else if (error.message) {
-            throw new Error(error.message);
-        } else {
-            throw new Error('Login failed. Please try again.');
-        }
+        throw error;
     }
 };
 
