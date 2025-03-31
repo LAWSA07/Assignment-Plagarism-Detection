@@ -4,6 +4,9 @@ import axios from 'axios';
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const API_URL = `${BASE_URL}/api`;
 
+console.log('Environment:', process.env.NODE_ENV);
+console.log('Using API URL:', API_URL);
+
 // Function to validate the server is running
 const validateServer = async () => {
     try {
@@ -67,10 +70,73 @@ const authApi = axios.create({
         'Accept': 'application/json'
     },
     withCredentials: true,
-    timeout: 30000 // 30 seconds
+    timeout: 60000, // Increase timeout to 60 seconds
+    validateStatus: status => {
+        return (status >= 200 && status < 300) || status === 304;
+    }
 });
 
 let isServerValidated = false;
+
+// Add request interceptor for debugging
+authApi.interceptors.request.use(request => {
+    // Add timestamp to prevent caching
+    const timestamp = new Date().getTime();
+    if (request.method === 'get') {
+        request.params = {
+            ...request.params,
+            _t: timestamp
+        };
+    }
+
+    console.log('Starting Request:', {
+        url: request.url,
+        method: request.method,
+        baseURL: request.baseURL,
+        headers: request.headers,
+        withCredentials: request.withCredentials,
+        params: request.params
+    });
+    return request;
+});
+
+// Add response interceptor for debugging and error handling
+authApi.interceptors.response.use(
+    response => {
+        console.log('Response:', {
+            status: response.status,
+            data: response.data,
+            headers: response.headers,
+            cookies: document.cookie
+        });
+        return response;
+    },
+    error => {
+        console.error('API Error:', {
+            url: error.config?.url,
+            method: error.config?.method,
+            status: error.response?.status,
+            data: error.response?.data,
+            message: error.message,
+            cookies: document.cookie
+        });
+
+        // Handle specific error cases
+        if (error.code === 'ECONNABORTED') {
+            throw new Error('Request timed out. The server might be starting up, please try again in a few moments.');
+        }
+
+        if (error.response?.status === 401) {
+            throw new Error('Invalid email or password');
+        }
+
+        if (error.response?.status === 403) {
+            throw new Error('Access denied. Please check your permissions.');
+        }
+
+        throw new Error(error.response?.data?.message || 'An unexpected error occurred. Please try again.');
+    }
+);
 
 // Add request interceptor for error handling
 authApi.interceptors.request.use(
@@ -96,67 +162,26 @@ authApi.interceptors.request.use(
     error => Promise.reject(error)
 );
 
-// Add response interceptor to handle errors
-authApi.interceptors.response.use(
-    response => response,
-    error => {
-        console.error('API Error:', error);
-        console.error('Full error details:', {
-            status: error.response?.status,
-            data: error.response?.data,
-            headers: error.response?.headers,
-            config: error.config
-        });
-
-        // Handle specific error cases
-        if (error.code === 'ECONNABORTED') {
-            throw new Error('Request timed out. The server might be starting up, please try again in a few moments.');
-        } else if (error.response?.status === 404) {
-            throw new Error(`API endpoint not found: ${error.config?.url}`);
-        } else if (error.code === 'ERR_NETWORK') {
-            throw new Error('Network error. Please check your connection and try again.');
-        } else if (error.response?.status === 401) {
-            localStorage.removeItem('user');
-            throw new Error(error.response.data?.error || 'Authentication failed');
-        } else if (error.response?.data?.error) {
-            throw new Error(error.response.data.error);
-        }
-        throw error;
-    }
-);
-
 export const register = async (userData) => {
     try {
-        console.log('Registering user:', userData);
-        console.log('Using API URL:', API_URL);
+        console.log('Attempting registration with:', userData);
         const response = await authApi.post('/register', userData);
-        console.log('Registration response:', response.data);
-
-        if (response.data.success) {
-            localStorage.setItem('user', JSON.stringify(response.data.user));
-            return response.data.user;
-        } else {
-            throw new Error(response.data.message || 'Registration failed');
-        }
+        return response.data;
     } catch (error) {
         console.error('Registration error:', error);
         throw error;
     }
 };
 
-export const login = async (credentials) => {
+export const login = async (email, password, isStudent) => {
     try {
-        console.log('Login attempt with:', credentials);
-        console.log('Using API URL:', API_URL);
-        const response = await authApi.post('/login', credentials);
-        console.log('Login response:', response.data);
-
-        if (response.data.success) {
-            localStorage.setItem('user', JSON.stringify(response.data.user));
-            return response.data.user;
-        } else {
-            throw new Error(response.data.message || 'Login failed');
-        }
+        console.log('Attempting login with:', { email, isStudent });
+        const response = await authApi.post('/login', {
+            email,
+            password,
+            is_student: isStudent
+        });
+        return response.data;
     } catch (error) {
         console.error('Login error:', error);
         throw error;
@@ -165,12 +190,11 @@ export const login = async (credentials) => {
 
 export const logout = async () => {
     try {
-        const response = await authApi.post('/logout');
-        localStorage.removeItem('user');
+        await authApi.post('/logout');
         return true;
     } catch (error) {
         console.error('Logout error:', error);
-        throw new Error(error.response?.data?.error || error.message || 'Logout failed');
+        throw error;
     }
 };
 
