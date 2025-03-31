@@ -49,7 +49,7 @@ api.interceptors.response.use(
 const validateServer = async () => {
     try {
         console.log('Trying health check at:', `${API_URL}/health`);
-        const response = await api.get('/api/health');
+        const response = await api.get('/health');
         console.log('Health check response:', response.data);
         return true;
     } catch (error) {
@@ -70,7 +70,7 @@ let isServerValidated = false;
 api.interceptors.request.use(
     async config => {
         // Skip validation for health endpoint
-        if (config.url === '/api/health') {
+        if (config.url === '/health') {
             return config;
         }
 
@@ -96,7 +96,7 @@ api.interceptors.request.use(
 export const login = async (email, password, isStudent) => {
     try {
         console.log('Attempting login with:', { email, isStudent });
-        const response = await api.post('/login', { email, password, isStudent });
+        const response = await api.post('/auth/login', { email, password, isStudent });
         console.log('Login response:', response.data);
 
         if (response.data.success) {
