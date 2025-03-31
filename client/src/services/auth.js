@@ -7,18 +7,35 @@ const API_URL = `${BASE_URL}/api`;
 // Function to validate the server is running
 const validateServer = async () => {
     try {
-        // Try the root URL first
-        console.log('Validating server at:', BASE_URL);
-        const rootResponse = await axios.get(BASE_URL, {
-            timeout: 5000,
+        // Try the health endpoint first since it's more reliable
+        console.log('Trying health check at:', `${API_URL}/health`);
+        const healthResponse = await axios.get(`${API_URL}/health`, {
+            timeout: 8000,
             headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
+                'Content-Type': 'application/json',
+                'Origin': window.location.origin
+            },
+            withCredentials: true
         });
-        console.log('Server root response:', rootResponse.data);
 
-        // Check if we got a valid response
+        if (healthResponse.data && healthResponse.data.status === 'healthy') {
+            console.log('Health check successful:', healthResponse.data);
+            return true;
+        }
+
+        // If health check doesn't confirm status, try root endpoint
+        console.log('Health check inconclusive, trying root endpoint...');
+        const rootResponse = await axios.get(BASE_URL, {
+            timeout: 8000,
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Origin': window.location.origin
+            },
+            withCredentials: true
+        });
+
         if (!rootResponse.data || !rootResponse.data.status) {
             throw new Error('Invalid server response');
         }
@@ -29,28 +46,16 @@ const validateServer = async () => {
         console.error('Error details:', {
             message: error.message,
             code: error.code,
-            response: error.response?.data
+            response: error.response?.data,
+            status: error.response?.status
         });
 
         if (error.code === 'ECONNABORTED') {
             throw new Error('Server is starting up. Please try again in a few moments.');
         } else if (error.response?.status === 404) {
-            // If root returns 404, try the health endpoint
-            try {
-                console.log('Trying health check at:', `${API_URL}/health`);
-                const healthResponse = await axios.get(`${API_URL}/health`, {
-                    timeout: 5000,
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    }
-                });
-                console.log('Health check response:', healthResponse.data);
-                return true;
-            } catch (healthError) {
-                console.error('Health check failed:', healthError);
-                throw new Error('Server is not responding correctly. Please try again later.');
-            }
+            throw new Error('Server endpoints not found. Please check the server configuration.');
+        } else if (error.code === 'ERR_NETWORK') {
+            throw new Error('Network error. Please check your connection and ensure the server is running.');
         }
         throw new Error(`Server validation failed: ${error.message}`);
     }
@@ -61,7 +66,8 @@ const authApi = axios.create({
     baseURL: API_URL,
     headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'Origin': window.location.origin
     },
     withCredentials: true,
     timeout: 30000 // 30 seconds
@@ -72,9 +78,6 @@ let isServerValidated = false;
 // Add request interceptor for error handling
 authApi.interceptors.request.use(
     async config => {
-        // Add origin header
-        config.headers['Origin'] = window.location.origin;
-
         // Skip validation for health endpoint
         if (config.url === '/health') {
             return config;
