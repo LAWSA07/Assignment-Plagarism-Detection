@@ -13,7 +13,7 @@ const StudentDashboard = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('assignments');
     const [assignments, setAssignments] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedAssignment, setSelectedAssignment] = useState(null);
     const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
@@ -24,84 +24,63 @@ const StudentDashboard = () => {
     });
 
     useEffect(() => {
+        const verifyAndLoadData = async () => {
+            try {
+                console.log('Verifying student session...');
+                const sessionData = await verifySession();
+                console.log('Session data:', sessionData);
+
+                if (!sessionData.logged_in || !sessionData.user) {
+                    throw new Error('Not logged in');
+                }
+
+                // Check if user is a student
+                if (sessionData.user.user_type !== 'student') {
+                    console.log('User is not a student, redirecting to professor dashboard');
+                    navigate('/professor-dashboard');
+                    return;
+                }
+
+                // Load assignments
+                await loadAssignments();
+            } catch (error) {
+                console.error('Session verification error:', error);
+                setError('Session verification failed. Please log in again.');
+                // Clear any stored user data
+                localStorage.removeItem('user');
+                navigate('/login');
+            } finally {
+                setLoading(false);
+            }
+        };
+
         verifyAndLoadData();
     }, [navigate]);
-
-    const verifyAndLoadData = async () => {
-        try {
-            setIsLoading(true);
-            setError(null);
-
-            const user = JSON.parse(localStorage.getItem('user'));
-            if (!user) {
-                console.log('No user found, redirecting to login');
-                navigate('/login');
-                return;
-            }
-
-            // Check if user is a student
-            if (user.user_type !== 'student') {
-                console.log('User is not a student, redirecting to professor dashboard');
-                navigate('/professor/dashboard');
-                return;
-            }
-
-            const sessionData = await verifySession();
-            if (sessionData.user_type !== 'student') {
-                console.log('User is not a student, redirecting to professor dashboard');
-                navigate('/professor/dashboard');
-                return;
-            }
-
-            await loadAssignments();
-        } catch (error) {
-            console.error('Session verification error:', error);
-            setError('Failed to verify session. Please try logging in again.');
-            localStorage.removeItem('user');
-            navigate('/login');
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
     const loadAssignments = async () => {
         try {
             const data = await fetchStudentAssignments();
-            console.log('Assignments fetched:', data);
             setAssignments(data);
         } catch (error) {
-            console.error('Error fetching assignments:', error);
-            setError('Failed to fetch assignments');
+            console.error('Error loading assignments:', error);
+            setError('Failed to load assignments');
         }
     };
 
-    const handleDownload = async (assignment) => {
-        if (!assignment || !assignment.id) {
-            console.error('Invalid assignment data:', assignment);
-            alert('Cannot download this assignment. Invalid assignment data.');
-            return;
-        }
-
+    const handleDownload = async (assignmentId) => {
         try {
-            setDownloadingAssignment(assignment.id);
-            console.log('Downloading assignment:', assignment.id);
-
-            const blob = await downloadAssignment(assignment.id);
-
-            // Create download link
+            const blob = await downloadAssignment(assignmentId);
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${assignment.name || 'assignment'}.pdf`;
+            a.download = `assignment-${assignmentId}.pdf`;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
         } catch (error) {
             console.error('Error downloading assignment:', error);
-            alert(error.message || 'Failed to download assignment file. Please try again later.');
-        } finally {
-            setDownloadingAssignment(null);
+            setError('Failed to download assignment');
         }
     };
 
@@ -128,11 +107,12 @@ const StudentDashboard = () => {
     const handleLogout = async () => {
         try {
             await logout();
+            // Clear any stored user data
             localStorage.removeItem('user');
             navigate('/login');
         } catch (error) {
-            console.error('Logout failed:', error);
-            alert('Failed to logout. Please try again.');
+            console.error('Logout error:', error);
+            setError('Failed to logout');
         }
     };
 
@@ -157,6 +137,10 @@ const StudentDashboard = () => {
             ? Math.round(assignments.reduce((acc, curr) => acc + (curr.score || 0), 0) / assignments.length) + '%'
             : 'N/A'
     };
+
+    if (loading) {
+        return <div>Loading...</div>;
+    }
 
     if (error) {
         return (
@@ -283,7 +267,7 @@ const StudentDashboard = () => {
                     </div>
                 </div>
 
-                {isLoading ? (
+                {loading ? (
                     <div className="loading">
                         <div className="loading-spinner"></div>
                         <p>Loading assignments...</p>
@@ -375,7 +359,7 @@ const StudentDashboard = () => {
                                         backgroundColor: 'white',
                                         color: '#3498db',
                                         cursor: 'pointer'
-                                    }} onClick={() => handleDownload(assignment)}>
+                                    }} onClick={() => handleDownload(assignment._id)}>
                                         Download
                                     </button>
                                     <button className="action-btn primary" style={{

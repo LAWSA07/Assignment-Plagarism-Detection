@@ -13,6 +13,7 @@ import os
 import logging
 from datetime import timedelta
 from dotenv import load_dotenv
+from flask_session import Session
 
 # Load environment variables
 load_dotenv()
@@ -83,6 +84,16 @@ app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     PERMANENT_SESSION_LIFETIME=3600  # 1 hour
 )
+
+# Session configuration
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
+
+# Initialize session
+Session(app)
 
 @app.before_request
 def make_session_permanent():

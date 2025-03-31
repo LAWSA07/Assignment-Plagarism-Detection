@@ -2,201 +2,171 @@ import axios from 'axios';
 
 // Get the base URL from environment variables
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const PORT = process.env.REACT_APP_PORT || '5000';
+
+// Construct the API URL
 const API_URL = `${BASE_URL}/api`;
+
+console.log('Environment:', process.env.NODE_ENV);
+console.log('Using API URL:', API_URL);
+
+// Create axios instance with default config
+const api = axios.create({
+    baseURL: API_URL,
+    timeout: 30000,
+    withCredentials: true,
+    headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
+});
+
+// Add request interceptor for debugging
+api.interceptors.request.use(
+    (config) => {
+        console.log('Making request to:', config.url);
+        console.log('Request headers:', config.headers);
+        return config;
+    },
+    (error) => {
+        console.error('Request error:', error);
+        return Promise.reject(error);
+    }
+);
+
+// Add response interceptor for debugging
+api.interceptors.response.use(
+    (response) => {
+        console.log('Response received:', response.status, response.data);
+        return response;
+    },
+    (error) => {
+        console.error('Response error:', error.response?.status, error.response?.data);
+        return Promise.reject(error);
+    }
+);
 
 // Function to validate the server is running
 const validateServer = async () => {
     try {
-        // Try the health endpoint first since it's more reliable
         console.log('Trying health check at:', `${API_URL}/health`);
-        const healthResponse = await axios.get(`${API_URL}/health`, {
-            timeout: 8000,
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            withCredentials: true
-        });
-
-        if (healthResponse.data && healthResponse.data.status === 'healthy') {
-            console.log('Health check successful:', healthResponse.data);
-            return true;
-        }
-
-        // If health check doesn't confirm status, try root endpoint
-        console.log('Health check inconclusive, trying root endpoint...');
-        const rootResponse = await axios.get(BASE_URL, {
-            timeout: 8000,
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            withCredentials: true
-        });
-
-        if (!rootResponse.data || !rootResponse.data.status) {
-            throw new Error('Invalid server response');
-        }
-
+        const response = await api.get('/health');
+        console.log('Health check response:', response.data);
         return true;
     } catch (error) {
         console.error('Server validation failed:', error);
         console.error('Error details:', {
             message: error.message,
             code: error.code,
-            response: error.response?.data,
+            response: error.response,
             status: error.response?.status
         });
-
-        if (error.code === 'ECONNABORTED') {
-            throw new Error('Server is starting up. Please try again in a few moments.');
-        } else if (error.response?.status === 404) {
-            throw new Error('Server endpoints not found. Please check the server configuration.');
-        } else if (error.code === 'ERR_NETWORK') {
-            throw new Error('Network error. Please check your connection and ensure the server is running.');
-        }
-        throw new Error(`Server validation failed: ${error.message}`);
+        throw new Error('Network error. Please check your connection and ensure the server is running.');
     }
 };
-
-// Create axios instance with default config
-const authApi = axios.create({
-    baseURL: API_URL,
-    headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-    },
-    withCredentials: true,
-    timeout: 30000 // 30 seconds
-});
 
 let isServerValidated = false;
 
 // Add request interceptor for error handling
-authApi.interceptors.request.use(
+api.interceptors.request.use(
     async config => {
         // Skip validation for health endpoint
         if (config.url === '/health') {
             return config;
         }
 
-        // Validate server only once
+        // Validate server if not already validated
         if (!isServerValidated) {
             try {
                 await validateServer();
                 isServerValidated = true;
             } catch (error) {
                 console.error('Server validation failed in interceptor:', error);
-                throw error;
+                return Promise.reject(error);
             }
         }
 
         return config;
     },
-    error => Promise.reject(error)
-);
-
-// Add response interceptor to handle errors
-authApi.interceptors.response.use(
-    response => response,
     error => {
-        console.error('API Error:', error);
-        console.error('Full error details:', {
-            status: error.response?.status,
-            data: error.response?.data,
-            headers: error.response?.headers,
-            config: error.config
-        });
-
-        // Handle specific error cases
-        if (error.code === 'ECONNABORTED') {
-            throw new Error('Request timed out. The server might be starting up, please try again in a few moments.');
-        } else if (error.response?.status === 404) {
-            throw new Error(`API endpoint not found: ${error.config?.url}`);
-        } else if (error.code === 'ERR_NETWORK') {
-            throw new Error('Network error. Please check your connection and try again.');
-        } else if (error.response?.status === 401) {
-            localStorage.removeItem('user');
-            throw new Error(error.response.data?.error || 'Authentication failed');
-        } else if (error.response?.data?.error) {
-            throw new Error(error.response.data.error);
-        }
-        throw error;
+        console.error('Request interceptor error:', error);
+        return Promise.reject(error);
     }
 );
 
-export const register = async (userData) => {
+export const login = async (email, password, isStudent) => {
     try {
-        console.log('Registering user:', userData);
-        console.log('Using API URL:', API_URL);
-        const response = await authApi.post('/register', userData);
-        console.log('Registration response:', response.data);
-
-        if (response.data.success) {
-            localStorage.setItem('user', JSON.stringify(response.data.user));
-            return response.data.user;
-        } else {
-            throw new Error(response.data.message || 'Registration failed');
-        }
-    } catch (error) {
-        console.error('Registration error:', error);
-        throw error;
-    }
-};
-
-export const login = async (credentials) => {
-    try {
-        console.log('Login attempt with:', credentials);
-        console.log('Using API URL:', API_URL);
-        const response = await authApi.post('/login', credentials);
+        console.log('Attempting login with:', { email, isStudent });
+        const response = await api.post('/login', { email, password, isStudent });
         console.log('Login response:', response.data);
 
         if (response.data.success) {
+            // Store user data in localStorage
             localStorage.setItem('user', JSON.stringify(response.data.user));
-            return response.data.user;
+            return response.data;
         } else {
             throw new Error(response.data.message || 'Login failed');
         }
     } catch (error) {
         console.error('Login error:', error);
-        throw error;
+        throw new Error(error.response?.data?.message || 'Login failed');
+    }
+};
+
+export const register = async (userData) => {
+    try {
+        console.log('Attempting registration with:', userData);
+        const response = await api.post('/register', userData);
+        console.log('Registration response:', response.data);
+
+        if (response.data.success) {
+            // Store user data in localStorage
+            localStorage.setItem('user', JSON.stringify(response.data.user));
+            return response.data;
+        } else {
+            throw new Error(response.data.message || 'Registration failed');
+        }
+    } catch (error) {
+        console.error('Registration error:', error);
+        throw new Error(error.response?.data?.message || 'Registration failed');
     }
 };
 
 export const logout = async () => {
     try {
-        const response = await authApi.post('/logout');
+        console.log('Attempting logout');
+        const response = await api.post('/logout');
+        console.log('Logout response:', response.data);
+
+        // Clear user data from localStorage
         localStorage.removeItem('user');
-        return true;
+        return response.data;
     } catch (error) {
         console.error('Logout error:', error);
-        throw new Error(error.response?.data?.error || error.message || 'Logout failed');
+        throw new Error(error.response?.data?.message || 'Logout failed');
     }
 };
 
 export const checkSession = async () => {
     try {
         console.log('Checking session...');
-        const response = await authApi.get('/check-session');
+        const response = await api.get('/check-session');
         console.log('Session check response:', response.data);
 
         if (response.data.logged_in && response.data.user) {
+            // Store user data in localStorage
             localStorage.setItem('user', JSON.stringify(response.data.user));
-            return response.data.user;
+            return response.data;
         }
 
+        // Clear user data if not logged in
         localStorage.removeItem('user');
-        return null;
+        return response.data;
     } catch (error) {
         console.error('Session check error:', error);
+        // Clear user data on error
         localStorage.removeItem('user');
-        if (error.response?.data?.error) {
-            throw new Error(error.response.data.error);
-        } else if (error.message) {
-            throw new Error(error.message);
-        } else {
-            throw new Error('Session check failed. Please try again.');
-        }
+        throw new Error(error.response?.data?.message || 'Session check failed');
     }
 };
 

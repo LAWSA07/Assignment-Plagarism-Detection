@@ -2,57 +2,46 @@ import axios from 'axios';
 
 // Get the base URL from environment variables
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const PORT = process.env.REACT_APP_PORT || '5000';
+
+// Construct the API URL
 const API_URL = `${BASE_URL}/api`;
 
 console.log('Environment:', process.env.NODE_ENV);
 console.log('Using API URL:', API_URL);
 
 // Create axios instance with default config
-const dashboardApi = axios.create({
+const api = axios.create({
     baseURL: API_URL,
+    timeout: 30000,
+    withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
-    },
-    withCredentials: true, // Important for cookies
-    timeout: 30000, // 30 seconds
-    validateStatus: status => {
-        return (status >= 200 && status < 300) || status === 304;
     }
 });
 
 // Add request interceptor for debugging
-dashboardApi.interceptors.request.use(request => {
-    console.log('Starting Request:', {
-        url: request.url,
-        method: request.method,
-        baseURL: request.baseURL,
-        headers: request.headers,
-        withCredentials: request.withCredentials
-    });
-    return request;
-});
+api.interceptors.request.use(
+    (config) => {
+        console.log('Making request to:', config.url);
+        console.log('Request headers:', config.headers);
+        return config;
+    },
+    (error) => {
+        console.error('Request error:', error);
+        return Promise.reject(error);
+    }
+);
 
 // Add response interceptor for debugging
-dashboardApi.interceptors.response.use(
-    response => {
-        console.log('Response:', {
-            status: response.status,
-            data: response.data,
-            headers: response.headers,
-            cookies: document.cookie
-        });
+api.interceptors.response.use(
+    (response) => {
+        console.log('Response received:', response.status, response.data);
         return response;
     },
-    error => {
-        console.error('API Error:', {
-            url: error.config?.url,
-            method: error.config?.method,
-            status: error.response?.status,
-            data: error.response?.data,
-            message: error.message,
-            cookies: document.cookie
-        });
+    (error) => {
+        console.error('Response error:', error.response?.status, error.response?.data);
         return Promise.reject(error);
     }
 );
@@ -60,7 +49,7 @@ dashboardApi.interceptors.response.use(
 export const verifySession = async () => {
     try {
         console.log('Verifying session...');
-        const response = await dashboardApi.get('/check-session');
+        const response = await api.get('/check-session');
         console.log('Session check response:', response.data);
 
         if (!response.data.logged_in) {
@@ -82,7 +71,7 @@ export const verifySession = async () => {
 
 export const fetchStudentAssignments = async () => {
     try {
-        const response = await dashboardApi.get('/student/assignments');
+        const response = await api.get('/student/assignments');
         return response.data;
     } catch (error) {
         console.error('Error fetching assignments:', error);
@@ -92,7 +81,7 @@ export const fetchStudentAssignments = async () => {
 
 export const downloadAssignment = async (assignmentId) => {
     try {
-        const response = await dashboardApi.get(`/assignments/${assignmentId}/download`, {
+        const response = await api.get(`/assignments/${assignmentId}/download`, {
             responseType: 'blob'
         });
         return response.data;
@@ -104,7 +93,7 @@ export const downloadAssignment = async (assignmentId) => {
 
 export const submitAssignment = async (assignmentId, formData) => {
     try {
-        const response = await dashboardApi.post(`/assignments/submit/${assignmentId}`, formData, {
+        const response = await api.post(`/assignments/submit/${assignmentId}`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }
@@ -118,7 +107,7 @@ export const submitAssignment = async (assignmentId, formData) => {
 
 export const checkSubmissionStatus = async (submissionId) => {
     try {
-        const response = await dashboardApi.get(`/submissions/${submissionId}/status`);
+        const response = await api.get(`/submissions/${submissionId}/status`);
         return response.data;
     } catch (error) {
         console.error('Error checking submission status:', error);
@@ -128,7 +117,7 @@ export const checkSubmissionStatus = async (submissionId) => {
 
 export const logout = async () => {
     try {
-        await dashboardApi.post('/logout');
+        await api.post('/logout');
         return true;
     } catch (error) {
         console.error('Logout error:', error);
