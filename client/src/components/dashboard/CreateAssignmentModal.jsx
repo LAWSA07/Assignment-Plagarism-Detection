@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { api } from '../../services/auth';
 import './Dashboard.css';
 
 const ALLOWED_FILE_TYPES = ['application/pdf'];
@@ -105,66 +106,16 @@ const CreateAssignmentModal = ({ isOpen, onClose, onAssignmentCreated }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setIsSubmitting(true);
+    setError('');
 
     try {
-      if (!validateForm()) {
-        setIsSubmitting(false);
-        return;
-      }
-
-      console.log('Submitting assignment with data:', {
-        name: formData.name,
-        course: formData.course,
-        description: formData.description,
-        due_date: formData.due_date,
-        file: formData.question_file ? {
-          name: formData.question_file.name,
-          type: formData.question_file.type,
-          size: formData.question_file.size
-        } : null,
-        sections: formData.sections
-      });
-
-      const data = new FormData();
-      data.append('name', formData.name.trim());
-      data.append('course', formData.course.trim());
-      data.append('description', formData.description.trim());
-      data.append('due_date', formData.due_date);
-      data.append('question_file', formData.question_file);
-      formData.sections.forEach(section => {
-        data.append('sections[]', section);
-      });
-
-      const response = await fetch(`${API_BASE_URL}/api/assignments/create`, {
-        method: 'POST',
-        credentials: 'include',
-        body: data
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create assignment');
-      }
-
-      const result = await response.json();
-      console.log('Assignment created successfully:', result);
-      onAssignmentCreated(result);
+      const response = await api.post('/assignments/create', formData);
+      onAssignmentCreated(response.data);
       onClose();
-      
-      // Reset form
-      setFormData({
-        name: '',
-        course: '',
-        description: '',
-        due_date: '',
-        question_file: null,
-        sections: []
-      });
     } catch (error) {
       console.error('Error creating assignment:', error);
-      setError(error.message || 'Failed to create assignment');
+      setError(error.response?.data?.message || 'Failed to create assignment');
     } finally {
       setIsSubmitting(false);
     }
@@ -173,7 +124,7 @@ const CreateAssignmentModal = ({ isOpen, onClose, onAssignmentCreated }) => {
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       className="modal-overlay"
       role="dialog"
       aria-labelledby={titleId}
@@ -190,7 +141,7 @@ const CreateAssignmentModal = ({ isOpen, onClose, onAssignmentCreated }) => {
           ×
         </button>
 
-        <form 
+        <form
           onSubmit={handleSubmit}
           noValidate
           encType="multipart/form-data"
