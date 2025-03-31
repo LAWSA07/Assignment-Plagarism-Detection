@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 auth_bp = Blueprint('auth', __name__)
 
-@auth_bp.route('/api/register', methods=['POST'])
+@auth_bp.route('/register', methods=['POST'])
 def register():
     try:
         data = request.get_json()
@@ -82,7 +82,7 @@ def register():
         logger.error(f"Registration error: {str(e)}")
         return jsonify({'error': 'Registration failed', 'details': str(e)}), 500
 
-@auth_bp.route('/api/login', methods=['POST'])
+@auth_bp.route('/login', methods=['POST'])
 def login():
     try:
         data = request.get_json()
@@ -97,7 +97,7 @@ def login():
             return jsonify({'error': 'Email and password are required'}), 400
 
         # Log login attempt
-        logger.info(f"Login attempt for email: {email} as {'student' if is_student else 'professor'}")
+        logger.info(f"Login attempt for email: {email}")
 
         # Find user by email
         user = User.objects(email=email).first()
@@ -126,7 +126,7 @@ def login():
         session.permanent = True
 
         # Log successful login
-        logger.info(f"Successful login for {email} as {user.user_type}")
+        logger.info(f"Successful login for {email}")
 
         return jsonify({
             'success': True,
@@ -138,7 +138,7 @@ def login():
         logger.error(f"Login error: {str(e)}")
         return jsonify({'error': 'Login failed'}), 500
 
-@auth_bp.route('/api/check-session', methods=['GET'])
+@auth_bp.route('/check-session', methods=['GET'])
 def check_session():
     try:
         user_id = session.get('user_id')
@@ -158,7 +158,7 @@ def check_session():
 
         return jsonify({
             'logged_in': True,
-            'user_type': 'student' if not user.is_professor else 'professor',
+            'user_type': user.user_type,
             'user': user.to_json()
         })
 
@@ -166,7 +166,7 @@ def check_session():
         logger.error(f"Session check error: {str(e)}")
         return jsonify({'error': 'Session check failed'}), 500
 
-@auth_bp.route('/api/logout', methods=['POST'])
+@auth_bp.route('/logout', methods=['POST'])
 def logout():
     try:
         session.clear()
@@ -191,13 +191,13 @@ def token_required(f):
         auth_header = request.headers.get('Authorization')
         if not auth_header:
             return jsonify({'error': 'No authorization token provided'}), 401
-            
+
         token = auth_header.replace('Bearer ', '')
         user = verify_session(token)
-        
+
         if not user:
             return jsonify({'error': 'Invalid or expired token'}), 401
-            
+
         return f(*args, **kwargs)
-    
-    return decorated 
+
+    return decorated

@@ -4,12 +4,14 @@ import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import ProfessorDashboard from './components/dashboard/ProfessorDashboard';
 import StudentDashboard from './components/dashboard/StudentDashboard';
+import TestConnection from './components/TestConnection';
 import './App.css';
 
 function App() {
   return (
     <Router>
       <div className="app">
+        <TestConnection />
         <Routes>
           <Route path="/" element={<Navigate to="/login" />} />
           <Route path="/login" element={<Login />} />

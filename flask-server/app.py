@@ -27,7 +27,7 @@ app.config.from_object(Config)
 # Configure CORS
 CORS(app,
      resources={
-         r"/api/*": {
+         r"/*": {  # Allow CORS for all routes
              "origins": [
                  "http://localhost:3000",
                  "http://localhost:3001",
@@ -47,19 +47,26 @@ try:
     if not mongodb_uri:
         raise ValueError("MONGODB_URI environment variable is not set")
 
-    connect(host=mongodb_uri)
+    # Adding explicit TLS/SSL options to fix handshake error
+    connect(
+        host=mongodb_uri,
+        ssl=True,
+        ssl_cert_reqs=None,  # Don't verify certificate
+        tls=True,
+        tlsAllowInvalidCertificates=True
+    )
     logger.info("Successfully connected to MongoDB Atlas")
 except Exception as e:
     logger.error(f"Failed to connect to MongoDB: {e}")
-    raise  # Re-raise the exception to prevent the app from starting with a bad DB connection
+    raise
 
 # Create upload folder if it doesn't exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# Register blueprints
-app.register_blueprint(assignments_bp)
-app.register_blueprint(auth_bp)
-app.register_blueprint(users_bp)
+# Register blueprints with /api prefix
+app.register_blueprint(assignments_bp, url_prefix='/api')
+app.register_blueprint(auth_bp, url_prefix='/api')
+app.register_blueprint(users_bp, url_prefix='/api')
 
 # Configure session
 app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
@@ -77,15 +84,27 @@ def make_session_permanent():
 @app.after_request
 def after_request(response):
     # Handle CORS headers
-    response.headers.update({
-        'Access-Control-Allow-Origin': request.headers.get('Origin', '*'),
-        'Access-Control-Allow-Credentials': 'true',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-    })
+    origin = request.headers.get('Origin')
+    if origin:  # Only set CORS headers if Origin header is present
+        response.headers.update({
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+        })
     return response
 
-@app.route('/api/health', methods=['GET'])
+# Root endpoint
+@app.route('/')
+def root():
+    return jsonify({
+        'status': 'online',
+        'message': 'Assignment Plagiarism Detection API'
+    })
+
+# Health check endpoints - handle both /health and /api/health
+@app.route('/health')
+@app.route('/api/health')
 def health_check():
     """Health check endpoint to verify server status"""
     return jsonify({
@@ -95,4 +114,4 @@ def health_check():
 
 if __name__ == '__main__':
     logger.info("Starting Flask server...")
-    app.run(debug=True, port=5000, host='0.0.0.0')
+    app.run(debug=True, host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
