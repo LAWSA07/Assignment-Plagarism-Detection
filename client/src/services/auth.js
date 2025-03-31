@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// Remove the /api suffix from the base URL as we'll add it in the routes
+// Get the base URL from environment variables
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const API_URL = `${BASE_URL}/api`;
 
@@ -8,24 +8,51 @@ const API_URL = `${BASE_URL}/api`;
 const validateServer = async () => {
     try {
         // Try the root URL first
-        const rootResponse = await axios.get(BASE_URL, { timeout: 5000 });
+        console.log('Validating server at:', BASE_URL);
+        const rootResponse = await axios.get(BASE_URL, {
+            timeout: 5000,
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
         console.log('Server root response:', rootResponse.data);
+
+        // Check if we got a valid response
+        if (!rootResponse.data || !rootResponse.data.status) {
+            throw new Error('Invalid server response');
+        }
+
         return true;
     } catch (error) {
         console.error('Server validation failed:', error);
+        console.error('Error details:', {
+            message: error.message,
+            code: error.code,
+            response: error.response?.data
+        });
+
         if (error.code === 'ECONNABORTED') {
             throw new Error('Server is starting up. Please try again in a few moments.');
         } else if (error.response?.status === 404) {
             // If root returns 404, try the health endpoint
             try {
-                const healthResponse = await axios.get(`${API_URL}/health`, { timeout: 5000 });
+                console.log('Trying health check at:', `${API_URL}/health`);
+                const healthResponse = await axios.get(`${API_URL}/health`, {
+                    timeout: 5000,
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
                 console.log('Health check response:', healthResponse.data);
                 return true;
             } catch (healthError) {
+                console.error('Health check failed:', healthError);
                 throw new Error('Server is not responding correctly. Please try again later.');
             }
         }
-        throw error;
+        throw new Error(`Server validation failed: ${error.message}`);
     }
 };
 
@@ -59,6 +86,7 @@ authApi.interceptors.request.use(
                 await validateServer();
                 isServerValidated = true;
             } catch (error) {
+                console.error('Server validation failed in interceptor:', error);
                 throw error;
             }
         }
