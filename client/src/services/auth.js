@@ -4,15 +4,20 @@ import axios from 'axios';
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const API_URL = `${BASE_URL}/api`;
 
-console.log('Using API URL:', API_URL);  // Debug log
+console.log('API Configuration:', {
+    BASE_URL,
+    API_URL,
+    NODE_ENV: process.env.NODE_ENV,
+    origin: window.location.origin
+});
 
 // Function to validate the server is running
 const validateServer = async () => {
     try {
-        // Try the health endpoint first since it's more reliable
-        console.log('Trying health check at:', `${API_URL}/health`);
+        // Try the health endpoint first
+        console.log('Checking server health at:', `${API_URL}/health`);
         const healthResponse = await axios.get(`${API_URL}/health`, {
-            timeout: 8000,
+            timeout: 10000,
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
@@ -21,28 +26,13 @@ const validateServer = async () => {
             withCredentials: true
         });
 
+        console.log('Health check response:', healthResponse.data);
+
         if (healthResponse.data && healthResponse.data.status === 'healthy') {
-            console.log('Health check successful:', healthResponse.data);
             return true;
         }
 
-        // If health check doesn't confirm status, try root endpoint
-        console.log('Health check inconclusive, trying root endpoint...');
-        const rootResponse = await axios.get(BASE_URL, {
-            timeout: 8000,
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'Origin': window.location.origin
-            },
-            withCredentials: true
-        });
-
-        if (!rootResponse.data || !rootResponse.data.status) {
-            throw new Error('Invalid server response');
-        }
-
-        return true;
+        throw new Error('Server health check failed');
     } catch (error) {
         console.error('Server validation failed:', error);
         console.error('Error details:', {
