@@ -10,7 +10,7 @@ const authApi = axios.create({
         'Accept': 'application/json'
     },
     withCredentials: true,
-    timeout: 10000 // 10 second timeout
+    timeout: 30000 // Increased to 30 seconds for production
 });
 
 // Create a separate instance for health checks to avoid infinite loops
@@ -21,8 +21,41 @@ const healthApi = axios.create({
         'Accept': 'application/json'
     },
     withCredentials: true,
-    timeout: 3000
+    timeout: 10000 // Increased to 10 seconds for health checks
 });
+
+let isHealthCheckPending = false;
+let lastHealthCheckTime = 0;
+const HEALTH_CHECK_INTERVAL = 30000; // 30 seconds
+
+// Function to check server health
+const checkServerHealth = async () => {
+    const now = Date.now();
+
+    // Skip health check if one is pending or if last check was recent
+    if (isHealthCheckPending || (now - lastHealthCheckTime < HEALTH_CHECK_INTERVAL)) {
+        return true;
+    }
+
+    try {
+        isHealthCheckPending = true;
+        const healthResponse = await healthApi.get('/health');
+        console.log('Health check response:', healthResponse.data);
+        lastHealthCheckTime = now;
+        return true;
+    } catch (error) {
+        console.error('Server health check failed:', error);
+        console.error('Full error details:', {
+            status: error.response?.status,
+            data: error.response?.data,
+            headers: error.response?.headers,
+            config: error.config
+        });
+        throw error;
+    } finally {
+        isHealthCheckPending = false;
+    }
+};
 
 // Add request interceptor for error handling
 authApi.interceptors.request.use(
@@ -30,32 +63,23 @@ authApi.interceptors.request.use(
         // Add origin header
         config.headers['Origin'] = window.location.origin;
 
-        // Skip health check for health endpoint to avoid infinite loop
+        // Skip health check for health endpoint
         if (config.url === '/health') {
             return config;
         }
 
         try {
-            // Try to connect to server using the health check instance
-            const healthResponse = await healthApi.get('/health');
-            console.log('Health check response:', healthResponse.data);
+            await checkServerHealth();
             return config;
         } catch (error) {
-            console.error('Server health check failed:', error);
-            console.error('Full error details:', {
-                status: error.response?.status,
-                data: error.response?.data,
-                headers: error.response?.headers,
-                config: error.config
-            });
-            if (error.response?.status === 404) {
+            if (error.code === 'ECONNABORTED') {
+                throw new Error('Server is starting up. Please try again in a few moments.');
+            } else if (error.response?.status === 404) {
                 throw new Error('API endpoint not found. Please check the server configuration.');
             } else if (error.code === 'ERR_NETWORK') {
                 throw new Error('Unable to connect to server. Please make sure the server is running.');
-            } else if (error.code === 'ECONNABORTED') {
-                throw new Error('Server connection timed out. Please try again.');
             }
-            throw new Error(`Server is not responding. Details: ${error.message}`);
+            throw new Error(`Server is not responding. Please try again in a few moments. (${error.message})`);
         }
     },
     error => Promise.reject(error)
@@ -72,7 +96,11 @@ authApi.interceptors.response.use(
             headers: error.response?.headers,
             config: error.config
         });
-        if (error.response?.status === 404) {
+
+        // Handle specific error cases
+        if (error.code === 'ECONNABORTED') {
+            throw new Error('Request timed out. The server might be starting up, please try again in a few moments.');
+        } else if (error.response?.status === 404) {
             throw new Error(`API endpoint not found: ${error.config?.url}`);
         } else if (error.code === 'ERR_NETWORK') {
             throw new Error('Network error. Please check your connection and try again.');

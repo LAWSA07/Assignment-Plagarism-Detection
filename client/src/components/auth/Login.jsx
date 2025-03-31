@@ -83,11 +83,17 @@ const Login = () => {
 
     try {
       if (isLogin) {
+        // Show loading message
+        setError('Connecting to server... This might take a few moments on the first request.');
+
         const user = await login({
           email: formData.email.trim(),
           password: formData.password,
           isStudent: isStudent
         });
+
+        // Clear loading message
+        setError('');
 
         // Check if user type matches the portal type
         if (isStudent && user.user_type === 'professor') {
@@ -105,6 +111,9 @@ const Login = () => {
           navigate('/student/dashboard');
         }
       } else {
+        // Show loading message for registration
+        setError('Creating your account... This might take a few moments.');
+
         await register({
           email: formData.email.trim(),
           password: formData.password,
@@ -141,7 +150,7 @@ const Login = () => {
         <p className="subtitle">Enter your credentials to access the system</p>
 
         <div className="auth-tabs">
-          <button 
+          <button
             className={`tab ${isLogin ? 'active' : ''}`}
             onClick={() => {
               setIsLogin(true);
@@ -151,7 +160,7 @@ const Login = () => {
           >
             Login
           </button>
-          <button 
+          <button
             className={`tab ${!isLogin ? 'active' : ''}`}
             onClick={() => {
               setIsLogin(false);
@@ -254,8 +263,8 @@ const Login = () => {
             </>
           )}
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="submit-btn"
             disabled={isLoading}
           >
@@ -263,7 +272,7 @@ const Login = () => {
           </button>
         </form>
 
-        <button 
+        <button
           className="switch-portal-btn"
           onClick={() => {
             setIsStudent(!isStudent);
@@ -278,4 +287,4 @@ const Login = () => {
   );
 };
 
-export default Login; 
+export default Login;
