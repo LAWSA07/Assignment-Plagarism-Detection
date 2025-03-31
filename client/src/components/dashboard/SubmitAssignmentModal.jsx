@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { submitAssignment, checkSubmissionStatus } from '../../services/dashboard';
 import './Dashboard.css';
 
 const SubmitAssignmentModal = ({ isOpen, onClose, assignment, onSubmissionComplete }) => {
@@ -18,17 +19,9 @@ const SubmitAssignmentModal = ({ isOpen, onClose, assignment, onSubmissionComple
 
   const checkProcessingStatus = async (submissionId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/submissions/${submissionId}/status`, {
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to check processing status');
-      }
-
-      const data = await response.json();
+      const data = await checkSubmissionStatus(submissionId);
       setProcessingStatus(data.processing_status);
-      
+
       if (data.processing_status === 'Completed') {
         setProcessingResults({
           plagiarismScore: data.plagiarism_score,
@@ -65,20 +58,9 @@ const SubmitAssignmentModal = ({ isOpen, onClose, assignment, onSubmissionComple
       const formData = new FormData();
       formData.append('answerFile', answerFile);
 
-      const response = await fetch(`http://localhost:5000/api/assignments/submit/${assignment.id}`, {
-        method: 'POST',
-        credentials: 'include',
-        body: formData
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to submit assignment');
-      }
-
-      const submission = await response.json();
+      const submission = await submitAssignment(assignment.id, formData);
       setProcessingStatus(submission.processing_status);
-      
+
       // Start checking processing status
       if (submission.processing_status === 'Pending' || submission.processing_status === 'Processing') {
         setTimeout(() => checkProcessingStatus(submission.id), 2000);
@@ -172,17 +154,17 @@ const SubmitAssignmentModal = ({ isOpen, onClose, assignment, onSubmissionComple
           </div>
 
           <div className="modal-actions">
-            <button 
-              type="button" 
-              className="cancel-btn" 
+            <button
+              type="button"
+              className="cancel-btn"
               onClick={onClose}
               disabled={isSubmitting || processingStatus === 'Processing'}
             >
               Cancel
             </button>
-            <button 
-              type="submit" 
-              className="submit-btn" 
+            <button
+              type="submit"
+              className="submit-btn"
               disabled={isSubmitting || !answerFile || processingStatus === 'Processing'}
             >
               {isSubmitting ? 'Submitting...' : 'Submit Assignment'}
@@ -194,4 +176,4 @@ const SubmitAssignmentModal = ({ isOpen, onClose, assignment, onSubmissionComple
   );
 };
 
-export default SubmitAssignmentModal; 
+export default SubmitAssignmentModal;

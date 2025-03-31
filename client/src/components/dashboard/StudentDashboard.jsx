@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SubmitAssignmentModal from './SubmitAssignmentModal';
+import { verifySession, fetchStudentAssignments, downloadAssignment, logout } from '../../services/dashboard';
 import './Dashboard.css';
 
 const StudentDashboard = () => {
@@ -29,15 +30,22 @@ const StudentDashboard = () => {
                 navigate('/login');
                 return;
             }
-            
+
             // Check if user is a student
             if (user.user_type !== 'student') {
                 console.log('User is not a student, redirecting to professor dashboard');
                 navigate('/professor/dashboard');
                 return;
             }
-            
-            await verifySession();
+
+            const sessionData = await verifySession();
+            if (sessionData.user_type !== 'student') {
+                console.log('User is not a student, redirecting to professor dashboard');
+                navigate('/professor/dashboard');
+                return;
+            }
+
+            await loadAssignments();
         } catch (error) {
             setError('Failed to verify session. Please try logging in again.');
             console.error('Session verification error:', error);
@@ -45,54 +53,10 @@ const StudentDashboard = () => {
         }
     };
 
-    const verifySession = async () => {
-        try {
-            console.log('Verifying student session...');
-            const response = await fetch('http://localhost:5000/api/check-session', {
-                credentials: 'include'
-            });
-
-            if (!response.ok) {
-                throw new Error('Session verification failed');
-            }
-
-            const data = await response.json();
-            console.log('Session check response:', data);
-
-            if (!data.logged_in) {
-                console.log('Not logged in, redirecting to login');
-                localStorage.removeItem('user');
-                navigate('/login');
-                return;
-            }
-
-            if (data.user_type !== 'student') {
-                console.log('User is not a student, redirecting to professor dashboard');
-                navigate('/professor/dashboard');
-                return;
-            }
-
-            await fetchAssignments();
-        } catch (error) {
-            setError('Session verification failed. Please log in again.');
-            localStorage.removeItem('user');
-            navigate('/login');
-        }
-    };
-
-    const fetchAssignments = async () => {
+    const loadAssignments = async () => {
         try {
             setIsLoading(true);
-            const response = await fetch('http://localhost:5000/api/student/assignments', {
-                method: 'GET',
-                credentials: 'include'
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
+            const data = await fetchStudentAssignments();
             console.log('Assignments fetched:', data);
             setAssignments(data);
         } catch (error) {
@@ -113,30 +77,10 @@ const StudentDashboard = () => {
         try {
             setDownloadingAssignment(assignment.id);
             console.log('Downloading assignment:', assignment.id);
-            
-            const response = await fetch(`http://localhost:5000/api/assignments/${assignment.id}/download`, {
-                method: 'GET',
-                credentials: 'include'
-            });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to download assignment');
-            }
+            const blob = await downloadAssignment(assignment.id);
 
-            // Check content type
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/pdf')) {
-                console.warn('Unexpected content type:', contentType);
-            }
-
-            const blob = await response.blob();
-            if (blob.size === 0) {
-                throw new Error('Downloaded file is empty');
-            }
-
-            console.log('File downloaded successfully. Size:', blob.size, 'Type:', blob.type);
-            
+            // Create download link
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -164,7 +108,7 @@ const StudentDashboard = () => {
     };
 
     const handleSubmissionComplete = (submission) => {
-        setAssignments(assignments.map(assignment => 
+        setAssignments(assignments.map(assignment =>
             assignment.id === submission.assignment_id
                 ? { ...assignment, status: 'Submitted', progress: 100 }
                 : assignment
@@ -175,17 +119,9 @@ const StudentDashboard = () => {
 
     const handleLogout = async () => {
         try {
-            const response = await fetch('http://localhost:5000/api/logout', {
-                method: 'POST',
-                credentials: 'include'
-            });
-
-            if (response.ok) {
-                localStorage.removeItem('user');
-                navigate('/login');
-            } else {
-                throw new Error('Logout failed');
-            }
+            await logout();
+            localStorage.removeItem('user');
+            navigate('/login');
         } catch (error) {
             console.error('Logout failed:', error);
             alert('Failed to logout. Please try again.');
@@ -209,7 +145,7 @@ const StudentDashboard = () => {
     const stats = {
         pendingAssignments: assignments.filter(a => !a.status || a.status === 'Active').length,
         completedAssignments: assignments.filter(a => a.status === 'Submitted' || a.status === 'Graded').length,
-        averageScore: assignments.length > 0 
+        averageScore: assignments.length > 0
             ? Math.round(assignments.reduce((acc, curr) => acc + (curr.score || 0), 0) / assignments.length) + '%'
             : 'N/A'
     };
@@ -240,8 +176,8 @@ const StudentDashboard = () => {
                 </button>
             </div>
 
-            <div className="stats-container" style={{ 
-                display: 'grid', 
+            <div className="stats-container" style={{
+                display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
                 gap: '20px',
                 padding: '20px'
@@ -259,7 +195,7 @@ const StudentDashboard = () => {
                     </p>
                     <p className="stat-label" style={{ color: '#7f8c8d' }}>Due this week</p>
                 </div>
-                
+
                 <div className="stat-card" style={{
                     background: 'white',
                     padding: '20px',
@@ -273,7 +209,7 @@ const StudentDashboard = () => {
                     </p>
                     <p className="stat-label" style={{ color: '#7f8c8d' }}>This semester</p>
                 </div>
-                
+
                 <div className="stat-card" style={{
                     background: 'white',
                     padding: '20px',
@@ -296,13 +232,13 @@ const StudentDashboard = () => {
                 >
                     Assignments
                 </button>
-                <button 
+                <button
                     className={`tab ${activeTab === 'submit' ? 'active' : ''}`}
                     onClick={() => setActiveTab('submit')}
                 >
                     Submit
                 </button>
-                <button 
+                <button
                     className={`tab ${activeTab === 'feedback' ? 'active' : ''}`}
                     onClick={() => setActiveTab('feedback')}
                 >
@@ -314,7 +250,7 @@ const StudentDashboard = () => {
                 <div className="section-header">
                     <h2>My Assignments</h2>
                     <div className="filters">
-                        <select 
+                        <select
                             className="filter-select"
                             value={filters.status}
                             onChange={(e) => handleFilterChange('status', e.target.value)}
@@ -325,7 +261,7 @@ const StudentDashboard = () => {
                             <option>Submitted</option>
                             <option>Graded</option>
                         </select>
-                        <select 
+                        <select
                             className="filter-select"
                             value={filters.course}
                             onChange={(e) => handleFilterChange('course', e.target.value)}
@@ -346,7 +282,7 @@ const StudentDashboard = () => {
                     </div>
                 ) : filteredAssignments.length === 0 ? (
                     <div className="no-assignments">
-                        {assignments.length === 0 
+                        {assignments.length === 0
                             ? 'No assignments available at the moment.'
                             : 'No assignments match the selected filters.'}
                     </div>
@@ -367,7 +303,7 @@ const StudentDashboard = () => {
                             <div className="col">Progress</div>
                             <div className="col">Actions</div>
                         </div>
-                        
+
                         {filteredAssignments.map((assignment) => (
                             <div key={assignment._id} className="table-row" style={{
                                 display: 'grid',
@@ -397,7 +333,7 @@ const StudentDashboard = () => {
                                         padding: '5px 10px',
                                         borderRadius: '15px',
                                         fontSize: '0.9em',
-                                        backgroundColor: assignment.status === 'Submitted' ? '#2ecc71' : 
+                                        backgroundColor: assignment.status === 'Submitted' ? '#2ecc71' :
                                                        assignment.status === 'In Progress' ? '#f1c40f' : '#95a5a6',
                                         color: 'white'
                                     }}>
@@ -468,4 +404,4 @@ const StudentDashboard = () => {
     );
 };
 
-export default StudentDashboard; 
+export default StudentDashboard;
