@@ -4,45 +4,43 @@ import axios from 'axios';
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const API_URL = `${BASE_URL}/api`;
 
-console.log('API Configuration:', {
-    BASE_URL,
-    API_URL,
-    NODE_ENV: process.env.NODE_ENV,
-    origin: window.location.origin
-});
-
-// Create axios instance with default config
-const authApi = axios.create({
-    baseURL: API_URL,
-    headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-    },
-    withCredentials: true,
-    timeout: 30000 // 30 seconds
-});
-
 // Function to validate the server is running
 const validateServer = async () => {
     try {
-        // Try the health endpoint first
-        console.log('Checking server health at:', `${API_URL}/health`);
+        // Try the health endpoint first since it's more reliable
+        console.log('Trying health check at:', `${API_URL}/health`);
         const healthResponse = await axios.get(`${API_URL}/health`, {
-            timeout: 10000,
+            timeout: 8000,
             headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Origin': window.location.origin
             },
             withCredentials: true
         });
 
-        console.log('Health check response:', healthResponse.data);
-
         if (healthResponse.data && healthResponse.data.status === 'healthy') {
+            console.log('Health check successful:', healthResponse.data);
             return true;
         }
 
-        throw new Error('Server health check failed');
+        // If health check doesn't confirm status, try root endpoint
+        console.log('Health check inconclusive, trying root endpoint...');
+        const rootResponse = await axios.get(BASE_URL, {
+            timeout: 8000,
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Origin': window.location.origin
+            },
+            withCredentials: true
+        });
+
+        if (!rootResponse.data || !rootResponse.data.status) {
+            throw new Error('Invalid server response');
+        }
+
+        return true;
     } catch (error) {
         console.error('Server validation failed:', error);
         console.error('Error details:', {
@@ -62,6 +60,18 @@ const validateServer = async () => {
         throw new Error(`Server validation failed: ${error.message}`);
     }
 };
+
+// Create axios instance with default config
+const authApi = axios.create({
+    baseURL: API_URL,
+    headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Origin': window.location.origin
+    },
+    withCredentials: true,
+    timeout: 30000 // 30 seconds
+});
 
 let isServerValidated = false;
 
@@ -101,6 +111,7 @@ authApi.interceptors.response.use(
             config: error.config
         });
 
+        // Handle specific error cases
         if (error.code === 'ECONNABORTED') {
             throw new Error('Request timed out. The server might be starting up, please try again in a few moments.');
         } else if (error.response?.status === 404) {
@@ -117,38 +128,22 @@ authApi.interceptors.response.use(
     }
 );
 
-// Registration function
 export const register = async (userData) => {
     try {
-        console.log('Registering user:', userData);  // Debug log
-        console.log('Using API URL:', API_URL);  // Debug log
-
+        console.log('Registering user:', userData);
+        console.log('Using API URL:', API_URL);
         const response = await authApi.post('/register', userData);
-        console.log('Registration response:', response.data);  // Debug log
+        console.log('Registration response:', response.data);
 
-        if (response.data.status === 'success') {
-            return {
-                success: true,
-                data: response.data.user,
-                message: response.data.message
-            };
+        if (response.data.success) {
+            localStorage.setItem('user', JSON.stringify(response.data.user));
+            return response.data.user;
         } else {
             throw new Error(response.data.message || 'Registration failed');
         }
     } catch (error) {
         console.error('Registration error:', error);
-        console.error('Full error details:', {
-            status: error.response?.status,
-            data: error.response?.data,
-            headers: error.response?.headers,
-            config: error.config
-        });
-
-        throw new Error(
-            error.response?.data?.message ||
-            error.message ||
-            'Registration failed. Please try again.'
-        );
+        throw error;
     }
 };
 

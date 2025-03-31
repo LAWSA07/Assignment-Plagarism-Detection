@@ -26,7 +26,7 @@ app.config.from_object(Config)
 
 # Get port from environment variable (Render sets PORT)
 port = int(os.getenv('PORT', 10000))
-host = '0.0.0.0'  # Always bind to 0.0.0.0 for Render
+host = os.getenv('HOST', '0.0.0.0')
 
 # Configure CORS with more permissive settings
 allowed_origins = [
@@ -34,8 +34,7 @@ allowed_origins = [
     "http://localhost:3001",
     "https://assignment-plagarism-detection-tj5d.vercel.app",
     "https://assignment-plagarism-detection-8mll.vercel.app",
-    "https://assignment-plagarism-detection-1.onrender.com",
-    "https://assignment-plagarism-detection-s73u-2jzx78tqo-lawsa07s-projects.vercel.app"
+    "https://assignment-plagarism-detection-1.onrender.com"
 ]
 
 CORS(app,
@@ -43,9 +42,9 @@ CORS(app,
          r"/*": {
              "origins": allowed_origins,
              "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-             "allow_headers": ["Content-Type", "Authorization", "Origin", "Accept", "X-Requested-With"],
-             "expose_headers": ["Content-Type", "Authorization"],
+             "allow_headers": ["Content-Type", "Authorization"],
              "supports_credentials": True,
+             "expose_headers": ["Content-Type", "Authorization"],
              "max_age": 3600
          }
      })
@@ -95,27 +94,27 @@ def after_request(response):
     if origin in allowed_origins:
         response.headers.update({
             'Access-Control-Allow-Origin': origin,
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization, Origin, Accept, X-Requested-With',
             'Access-Control-Allow-Credentials': 'true',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
             'Access-Control-Max-Age': '3600'
         })
     return response
 
 @app.route('/')
-def root():
+def index():
     """Root endpoint to verify server is running"""
     return jsonify({
         'status': 'online',
-        'message': 'Assignment Management System API',
+        'message': 'Assignment Plagiarism Detection API',
         'version': '1.0',
         'port': port,
-        'environment': os.getenv('FLASK_ENV', 'production'),
         'endpoints': {
             'health': '/api/health',
             'auth': {
+                'login': '/api/login',
                 'register': '/api/register',
-                'login': '/api/login'
+                'logout': '/api/logout'
             }
         }
     })
@@ -127,66 +126,8 @@ def health_check():
     return jsonify({
         'status': 'healthy',
         'message': 'Server is running',
-        'port': port,
-        'environment': os.getenv('FLASK_ENV', 'production')
+        'port': port
     })
-
-@app.route('/api/register', methods=['POST'])
-def register():
-    try:
-        data = request.get_json()
-        print("Registration data received:", data)  # Debug log
-
-        # Extract user data
-        email = data.get('email')
-        password = data.get('password')
-        first_name = data.get('firstName')
-        last_name = data.get('lastName')
-        is_student = data.get('isStudent', True)
-
-        # Validate required fields
-        if not all([email, password, first_name, last_name]):
-            return jsonify({
-                'status': 'error',
-                'message': 'Missing required fields'
-            }), 400
-
-        # Check if user already exists
-        existing_user = User.objects(email=email).first()
-        if existing_user:
-            return jsonify({
-                'status': 'error',
-                'message': 'User already exists'
-            }), 409
-
-        # Create new user
-        new_user = User(
-            email=email,
-            first_name=first_name,
-            last_name=last_name,
-            is_student=is_student
-        )
-        new_user.set_password(password)
-        new_user.save()
-
-        return jsonify({
-            'status': 'success',
-            'message': 'User registered successfully',
-            'user': {
-                'email': new_user.email,
-                'firstName': new_user.first_name,
-                'lastName': new_user.last_name,
-                'isStudent': new_user.is_student
-            }
-        }), 201
-
-    except Exception as e:
-        print("Registration error:", str(e))  # Debug log
-        return jsonify({
-            'status': 'error',
-            'message': 'Registration failed',
-            'error': str(e)
-        }), 500
 
 # Error handlers
 @app.errorhandler(404)
@@ -207,22 +148,6 @@ def internal_error(error):
         'status_code': 500
     }), 500
 
-# Add preflight handler
-@app.route('/', methods=['OPTIONS'])
-@app.route('/<path:path>', methods=['OPTIONS'])
-def handle_preflight(path=''):
-    response = jsonify({'status': 'ok'})
-    origin = request.headers.get('Origin')
-    if origin in allowed_origins:
-        response.headers.update({
-            'Access-Control-Allow-Origin': origin,
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization, Origin, Accept, X-Requested-With',
-            'Access-Control-Allow-Credentials': 'true',
-            'Access-Control-Max-Age': '3600'
-        })
-    return response
-
 if __name__ == '__main__':
-    logger.info(f"Starting Flask server on {host}:{port}...")
-    app.run(host=host, port=port)
+    logger.info(f"Starting Flask server on port {port}...")
+    app.run(debug=False, port=port, host=host)
