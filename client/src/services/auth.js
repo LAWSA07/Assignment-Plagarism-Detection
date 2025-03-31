@@ -6,7 +6,8 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 const authApi = axios.create({
     baseURL: API_URL,
     headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
     },
     withCredentials: true,
     timeout: 10000 // 10 second timeout
@@ -15,13 +16,20 @@ const authApi = axios.create({
 // Create a separate instance for health checks to avoid infinite loops
 const healthApi = axios.create({
     baseURL: API_URL,
-    timeout: 3000,
-    withCredentials: true
+    headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    },
+    withCredentials: true,
+    timeout: 3000
 });
 
 // Add request interceptor for error handling
 authApi.interceptors.request.use(
     async config => {
+        // Add origin header
+        config.headers['Origin'] = window.location.origin;
+
         // Skip health check for health endpoint to avoid infinite loop
         if (config.url === '/health') {
             return config;
@@ -34,6 +42,12 @@ authApi.interceptors.request.use(
             return config;
         } catch (error) {
             console.error('Server health check failed:', error);
+            console.error('Full error details:', {
+                status: error.response?.status,
+                data: error.response?.data,
+                headers: error.response?.headers,
+                config: error.config
+            });
             if (error.response?.status === 404) {
                 throw new Error('API endpoint not found. Please check the server configuration.');
             } else if (error.code === 'ERR_NETWORK') {
@@ -41,7 +55,7 @@ authApi.interceptors.request.use(
             } else if (error.code === 'ECONNABORTED') {
                 throw new Error('Server connection timed out. Please try again.');
             }
-            throw new Error('Server is not responding. Please try again later.');
+            throw new Error(`Server is not responding. Details: ${error.message}`);
         }
     },
     error => Promise.reject(error)
@@ -52,8 +66,14 @@ authApi.interceptors.response.use(
     response => response,
     error => {
         console.error('API Error:', error);
+        console.error('Full error details:', {
+            status: error.response?.status,
+            data: error.response?.data,
+            headers: error.response?.headers,
+            config: error.config
+        });
         if (error.response?.status === 404) {
-            throw new Error('API endpoint not found. Please check the URL.');
+            throw new Error(`API endpoint not found: ${error.config?.url}`);
         } else if (error.code === 'ERR_NETWORK') {
             throw new Error('Network error. Please check your connection and try again.');
         } else if (error.response?.status === 401) {
