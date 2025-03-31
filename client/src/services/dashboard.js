@@ -4,7 +4,8 @@ import axios from 'axios';
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const API_URL = `${BASE_URL}/api`;
 
-console.log('Using API URL:', API_URL); // Debug log
+console.log('Environment:', process.env.NODE_ENV);
+console.log('Using API URL:', API_URL);
 
 // Create axios instance with default config
 const dashboardApi = axios.create({
@@ -13,20 +14,34 @@ const dashboardApi = axios.create({
         'Content-Type': 'application/json',
         'Accept': 'application/json'
     },
-    withCredentials: true,
-    timeout: 30000 // 30 seconds
+    withCredentials: true, // Important for cookies
+    timeout: 30000, // 30 seconds
+    validateStatus: status => {
+        return (status >= 200 && status < 300) || status === 304;
+    }
 });
 
 // Add request interceptor for debugging
 dashboardApi.interceptors.request.use(request => {
-    console.log('Starting Request:', request.url);
+    console.log('Starting Request:', {
+        url: request.url,
+        method: request.method,
+        baseURL: request.baseURL,
+        headers: request.headers,
+        withCredentials: request.withCredentials
+    });
     return request;
 });
 
 // Add response interceptor for debugging
 dashboardApi.interceptors.response.use(
     response => {
-        console.log('Response:', response.status, response.data);
+        console.log('Response:', {
+            status: response.status,
+            data: response.data,
+            headers: response.headers,
+            cookies: document.cookie
+        });
         return response;
     },
     error => {
@@ -35,7 +50,8 @@ dashboardApi.interceptors.response.use(
             method: error.config?.method,
             status: error.response?.status,
             data: error.response?.data,
-            message: error.message
+            message: error.message,
+            cookies: document.cookie
         });
         return Promise.reject(error);
     }
@@ -51,9 +67,15 @@ export const verifySession = async () => {
             throw new Error('Not logged in');
         }
 
+        // Store user data in localStorage
+        if (response.data.user) {
+            localStorage.setItem('user', JSON.stringify(response.data.user));
+        }
+
         return response.data;
     } catch (error) {
         console.error('Session verification error:', error);
+        localStorage.removeItem('user'); // Clear user data on error
         throw new Error('Session verification failed');
     }
 };

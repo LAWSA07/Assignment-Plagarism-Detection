@@ -76,13 +76,13 @@ app.register_blueprint(auth_bp, url_prefix='/api')
 app.register_blueprint(users_bp, url_prefix='/api')
 
 # Configure session
-app.config['SESSION_COOKIE_SECURE'] = True
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'None'
-app.permanent_session_lifetime = timedelta(days=1)
-
-# Set secret key from environment variable
-app.secret_key = os.getenv('SECRET_KEY', Config.SECRET_KEY)
+app.config.update(
+    SECRET_KEY=os.getenv('SECRET_KEY', 'your-secret-key'),
+    SESSION_COOKIE_SECURE=True,  # Requires HTTPS
+    SESSION_COOKIE_SAMESITE='None',  # Allows cross-site cookies
+    SESSION_COOKIE_HTTPONLY=True,
+    PERMANENT_SESSION_LIFETIME=3600  # 1 hour
+)
 
 @app.before_request
 def make_session_permanent():
