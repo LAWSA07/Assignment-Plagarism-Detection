@@ -31,8 +31,8 @@ CORS(app,
              "origins": [
                  "http://localhost:3000",
                  "http://localhost:3001",
-                 "https://*.vercel.app",  # Allow all Vercel preview deployments
-                 "https://your-frontend-domain.com"  # Replace with your actual Vercel domain
+                 "https://*.onrender.com",  # Allow all Render.com domains
+                 "https://*.vercel.app"     # Allow Vercel domains (if needed)
              ],
              "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
              "allow_headers": ["Content-Type", "Authorization"],
