@@ -4,6 +4,8 @@ import axios from 'axios';
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const API_URL = `${BASE_URL}/api`;
 
+console.log('Using API URL:', API_URL);  // Debug log
+
 // Function to validate the server is running
 const validateServer = async () => {
     try {
@@ -128,22 +130,38 @@ authApi.interceptors.response.use(
     }
 );
 
+// Registration function
 export const register = async (userData) => {
     try {
-        console.log('Registering user:', userData);
-        console.log('Using API URL:', API_URL);
-        const response = await authApi.post('/register', userData);
-        console.log('Registration response:', response.data);
+        console.log('Registering user:', userData);  // Debug log
+        console.log('Using API URL:', API_URL);  // Debug log
 
-        if (response.data.success) {
-            localStorage.setItem('user', JSON.stringify(response.data.user));
-            return response.data.user;
+        const response = await authApi.post('/register', userData);
+        console.log('Registration response:', response.data);  // Debug log
+
+        if (response.data.status === 'success') {
+            return {
+                success: true,
+                data: response.data.user,
+                message: response.data.message
+            };
         } else {
             throw new Error(response.data.message || 'Registration failed');
         }
     } catch (error) {
         console.error('Registration error:', error);
-        throw error;
+        console.error('Full error details:', {
+            status: error.response?.status,
+            data: error.response?.data,
+            headers: error.response?.headers,
+            config: error.config
+        });
+
+        throw new Error(
+            error.response?.data?.message ||
+            error.message ||
+            'Registration failed. Please try again.'
+        );
     }
 };
 
