@@ -32,8 +32,17 @@ ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', 'http://localhost:3000,http://loc
 allowed_origins = ALLOWED_ORIGINS.split(',')
 
 # If in production, make sure the frontend domain is in allowed origins
-if IS_PRODUCTION and 'https://your-frontend-domain.vercel.app' not in allowed_origins:
-    allowed_origins.append('https://your-frontend-domain.vercel.app')  # Replace with your actual domain
+RENDER_BACKEND_URL = 'https://assignment-plagarism-detection.onrender.com'
+FRONTEND_DOMAIN = os.getenv('FRONTEND_DOMAIN', 'https://your-frontend-domain.vercel.app')
+
+# Add production domains to allowed origins if not already included
+if IS_PRODUCTION:
+    if RENDER_BACKEND_URL not in allowed_origins:
+        allowed_origins.append(RENDER_BACKEND_URL)
+    if FRONTEND_DOMAIN not in allowed_origins:
+        allowed_origins.append(FRONTEND_DOMAIN)
+
+logger.info(f"CORS allowed origins: {allowed_origins}")
 
 # Session configuration
 app.config.update(

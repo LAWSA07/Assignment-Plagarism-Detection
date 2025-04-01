@@ -124,9 +124,13 @@ This project is licensed under the MIT License - see the LICENSE file for detail
      - `FLASK_ENV` = production
      - `SECRET_KEY` = [your-secure-secret-key]
      - `MONGODB_URI` = [your-mongodb-connection-string]
-     - `ALLOWED_ORIGINS` = https://your-frontend-domain.vercel.app
+     - `ALLOWED_ORIGINS` = [your-frontend-domain]
+     - `FRONTEND_DOMAIN` = [your-frontend-domain]
 
-5. Note about version conflicts:
+5. The backend is currently deployed at:
+   - [https://assignment-plagarism-detection.onrender.com](https://assignment-plagarism-detection.onrender.com)
+
+6. Note about version conflicts:
    - If you encounter dependency conflicts during deployment, you might need to adjust your requirements.txt file.
    - The current configuration requires Flask 2.2.0 or higher to be compatible with Flask-Session 0.5.0
 
@@ -147,8 +151,8 @@ ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
 
 ## Additional Configuration
 
-1. Update the API domain in `client/vercel.json`
-2. Update the frontend domain in `flask-server/app.py`
+1. Update the API domain in `client/vercel.json` to point to the Render URL: `https://assignment-plagarism-detection.onrender.com/api`
+2. Update the frontend domain in `flask-server/app.py` once you have your Vercel domain
 
 ## Post-Deployment Verification
 
