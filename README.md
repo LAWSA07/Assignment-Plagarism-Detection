@@ -118,13 +118,17 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 2. Create a new Web Service
 3. Connect your repository
 4. Configure the service:
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn -c gunicorn.conf.py app:app`
+   - **Build Command**: `pip install -r flask-server/requirements.txt`
+   - **Start Command**: `cd flask-server && gunicorn -c gunicorn.conf.py app:app`
    - **Environment Variables**:
      - `FLASK_ENV` = production
      - `SECRET_KEY` = [your-secure-secret-key]
      - `MONGODB_URI` = [your-mongodb-connection-string]
      - `ALLOWED_ORIGINS` = https://your-frontend-domain.vercel.app
+
+5. Note about version conflicts:
+   - If you encounter dependency conflicts during deployment, you might need to adjust your requirements.txt file.
+   - The current configuration requires Flask 2.2.0 or higher to be compatible with Flask-Session 0.5.0
 
 ## Environment Variables
 
