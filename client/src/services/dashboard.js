@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Use the deployed API URL consistently
-const BASE_URL = 'https://assignment-plagarism-detection-1.onrender.com';
+const BASE_URL = 'https://assignment-plagarism-detection.onrender.com';
 
 // Construct the API URL
 const API_URL = `${BASE_URL}/api`;
@@ -9,7 +9,7 @@ const API_URL = `${BASE_URL}/api`;
 console.log('Using API URL:', API_URL);
 
 // Create axios instance with default config
-const api = axios.create({
+export const api = axios.create({
     baseURL: API_URL,
     timeout: 30000,
     withCredentials: true,

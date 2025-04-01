@@ -1,10 +1,7 @@
 import axios from 'axios';
 
-// Use the deployed API URL consistently
-const BASE_URL = 'https://assignment-plagarism-detection.onrender.com';
-
-// Construct the API URL
-const API_URL = `${BASE_URL}/api`;
+// Get the API URL from environment variables
+const API_URL = process.env.REACT_APP_API_URL || 'https://assignment-plagarism-detection.onrender.com/api';
 
 console.log('Using API URL:', API_URL);
 
@@ -22,9 +19,7 @@ export const api = axios.create({
 // Add request interceptor for debugging
 api.interceptors.request.use(
     (config) => {
-        console.log('Making request to:', config.url);
-        // Remove the Origin header as it's automatically set by the browser
-        delete config.headers['Origin'];
+        console.log('Making request to:', `${config.baseURL}${config.url}`);
         return config;
     },
     (error) => {
@@ -40,7 +35,11 @@ api.interceptors.response.use(
         return response;
     },
     (error) => {
-        console.error('Response error:', error.response?.status, error.response?.data);
+        console.error('Response error:', {
+            status: error.response?.status,
+            data: error.response?.data,
+            message: error.message
+        });
         return Promise.reject(error);
     }
 );
@@ -53,28 +52,25 @@ const validateServer = async () => {
         console.log('Health check response:', response.data);
         return true;
     } catch (error) {
-        console.error('Server validation failed:', error);
-        console.error('Error details:', {
+        console.error('Server validation failed:', {
             message: error.message,
-            code: error.code,
-            response: error.response,
-            status: error.response?.status
+            status: error.response?.status,
+            data: error.response?.data
         });
-        throw new Error('Network error. Please check your connection and ensure the server is running.');
+        throw new Error('Failed to connect to server. Please try again later.');
     }
 };
 
 let isServerValidated = false;
 
-// Add request interceptor for error handling
+// Add request interceptor for server validation
 api.interceptors.request.use(
     async config => {
-        // Skip validation for health endpoint
+        // Skip validation for health endpoint to avoid infinite loop
         if (config.url === '/health') {
             return config;
         }
 
-        // Validate server if not already validated
         if (!isServerValidated) {
             try {
                 await validateServer();
@@ -100,15 +96,18 @@ export const login = async (email, password, isStudent) => {
         console.log('Login response:', response.data);
 
         if (response.data.success) {
-            // Store user data in localStorage
             localStorage.setItem('user', JSON.stringify(response.data.user));
             return response.data;
         } else {
             throw new Error(response.data.message || 'Login failed');
         }
     } catch (error) {
-        console.error('Login error:', error);
-        throw new Error(error.response?.data?.message || 'Login failed');
+        console.error('Login error:', {
+            message: error.message,
+            status: error.response?.status,
+            data: error.response?.data
+        });
+        throw new Error(error.response?.data?.message || error.message || 'Login failed');
     }
 };
 

@@ -14,6 +14,7 @@ import logging
 from datetime import timedelta
 from dotenv import load_dotenv
 from flask_session import Session
+from flask_cors import cross_origin
 
 # Load environment variables
 load_dotenv()
@@ -29,26 +30,27 @@ app.config.from_object(Config)
 port = int(os.getenv('PORT', 10000))
 host = os.getenv('HOST', '0.0.0.0')
 
-# Configure CORS with more permissive settings
-allowed_origins = [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "https://assignment-plagarism-detection-tj5d.vercel.app",
-    "https://assignment-plagarism-detection-8mll.vercel.app",
-    "https://assignment-plagarism-detection-s73u-2jzx78tqo-lawsa07s-projects.vercel.app",
-    "https://assignment-plagarism-detection-1.onrender.com"
-]
-
-# Configure CORS with specific options
+# Configure CORS
 CORS(app,
-     resources={r"/*": {
-         "origins": allowed_origins,
-         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-         "allow_headers": ["Content-Type", "Authorization", "Accept"],
-         "supports_credentials": True,
-         "expose_headers": ["Content-Type", "Authorization"],
-         "max_age": 3600
-     }})
+     resources={
+         r"/*": {  # Apply to all routes
+             "origins": [
+                 "https://assignment-plagarism-detection-s73u-2jzx78tqo-lawsa07s-projects.vercel.app",
+                 "http://localhost:3000"
+             ],
+             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+             "allow_headers": ["Content-Type", "Authorization", "Accept"],
+             "supports_credentials": True,
+             "expose_headers": ["Content-Type", "Authorization"],
+             "max_age": 3600
+         }
+     })
+
+# Define allowed origins for CORS
+allowed_origins = [
+    "https://assignment-plagarism-detection-s73u-2jzx78tqo-lawsa07s-projects.vercel.app",
+    "http://localhost:3000"
+]
 
 # MongoDB connection with error handling
 try:
@@ -109,6 +111,7 @@ def after_request(response):
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
             'Access-Control-Allow-Credentials': 'true',
+            'Access-Control-Expose-Headers': 'Content-Type, Authorization',
             'Access-Control-Max-Age': '3600'
         })
     return response
@@ -133,13 +136,16 @@ def index():
 
 @app.route('/health')
 @app.route('/api/health')
+@cross_origin(supports_credentials=True)
 def health_check():
     """Health check endpoint to verify server status"""
-    return jsonify({
+    response = jsonify({
         'status': 'healthy',
         'message': 'Server is running',
-        'port': port
+        'port': port,
+        'version': '1.0'
     })
+    return response
 
 # Error handlers
 @app.errorhandler(404)

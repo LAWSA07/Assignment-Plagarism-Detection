@@ -196,11 +196,18 @@ def logout():
         return jsonify({'error': 'Logout failed'}), 500
 
 def handle_preflight():
+    """Handle CORS preflight requests"""
     response = jsonify({'message': 'Preflight request handled'})
-    response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin'))
-    response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    origin = request.headers.get('Origin')
+    if origin in allowed_origins:
+        response.headers.update({
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
+            'Access-Control-Allow-Credentials': 'true',
+            'Access-Control-Expose-Headers': 'Content-Type, Authorization',
+            'Access-Control-Max-Age': '3600'
+        })
     return response
 
 # Authentication middleware
