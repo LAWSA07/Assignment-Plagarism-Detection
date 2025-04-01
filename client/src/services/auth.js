@@ -1,11 +1,7 @@
 import axios from 'axios';
 
-// Environment-aware API URL
-const API_URL = process.env.REACT_APP_API_URL || (
-  process.env.NODE_ENV === 'production'
-  ? 'https://assignment-plagarism-detection.onrender.com/api'  // Corrected URL without the -1
-  : 'http://localhost:5000/api'
-);
+// Use environment variable exclusively without fallback to hardcoded URL
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 console.log('Using API URL:', API_URL);  // For debugging during deployment
 

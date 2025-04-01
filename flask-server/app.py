@@ -31,20 +31,20 @@ IS_PRODUCTION = os.getenv('FLASK_ENV') == 'production'
 ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', 'http://localhost:3000,http://localhost:3001')
 allowed_origins = ALLOWED_ORIGINS.split(',')
 
-# Use actual deployment URLs
-RENDER_BACKEND_URL = 'https://assignment-plagarism-detection.onrender.com'  # Corrected URL - removed the -1
-VERCEL_FRONTEND_URL = 'https://assignment-plagarism-detection-8mll.vercel.app'  # Previous Vercel domain
-VERCEL_FRONTEND_URL_NEW = 'https://assignment-plagarism-detection-oun4.vercel.app'  # New Vercel domain
+# Get deployment URLs from environment variables
+BACKEND_URL = os.getenv('BACKEND_URL')
+FRONTEND_URLS = os.getenv('FRONTEND_URLS', '').split(',') if os.getenv('FRONTEND_URLS') else []
 
 logger.info(f"Production status: {IS_PRODUCTION}")
 
-# Always include all production domains in allowed origins
-if RENDER_BACKEND_URL not in allowed_origins:
-    allowed_origins.append(RENDER_BACKEND_URL)
-if VERCEL_FRONTEND_URL not in allowed_origins:
-    allowed_origins.append(VERCEL_FRONTEND_URL)
-if VERCEL_FRONTEND_URL_NEW not in allowed_origins:
-    allowed_origins.append(VERCEL_FRONTEND_URL_NEW)
+# Always include backend URL in allowed origins if provided
+if BACKEND_URL and BACKEND_URL not in allowed_origins:
+    allowed_origins.append(BACKEND_URL)
+
+# Add all frontend URLs to allowed origins
+for url in FRONTEND_URLS:
+    if url and url.strip() and url not in allowed_origins:
+        allowed_origins.append(url.strip())
 
 logger.info(f"CORS allowed origins: {allowed_origins}")
 
