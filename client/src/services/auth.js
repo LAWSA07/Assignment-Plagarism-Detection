@@ -3,7 +3,7 @@ import axios from 'axios';
 // Environment-aware API URL
 const API_URL = process.env.REACT_APP_API_URL || (
   process.env.NODE_ENV === 'production'
-  ? 'https://your-api-domain.render.com/api'  // Replace with your actual production API URL
+  ? 'https://assignment-plagarism-detection-1.onrender.com/api'  // Updated with actual Render URL
   : 'http://localhost:5000/api'
 );
 
@@ -99,6 +99,9 @@ export const login = async (credentials) => {
             credentials: 'include',
             body: JSON.stringify(credentials)
         });
+
+        // Log the full URL for debugging
+        console.log('Login URL:', `${API_URL}/auth/login`);
 
         if (!response.ok) {
             const errorData = await response.json();
