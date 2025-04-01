@@ -26,8 +26,16 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.config.from_object(Config)
 
-# Session configuration
+# Environment variables
 IS_PRODUCTION = os.getenv('FLASK_ENV') == 'production'
+ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', 'http://localhost:3000,http://localhost:3001')
+allowed_origins = ALLOWED_ORIGINS.split(',')
+
+# If in production, make sure the frontend domain is in allowed origins
+if IS_PRODUCTION and 'https://your-frontend-domain.vercel.app' not in allowed_origins:
+    allowed_origins.append('https://your-frontend-domain.vercel.app')  # Replace with your actual domain
+
+# Session configuration
 app.config.update(
     SESSION_COOKIE_SECURE=IS_PRODUCTION,  # Set Secure flag only in production
     SESSION_COOKIE_HTTPONLY=True,
@@ -46,11 +54,10 @@ app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key')  # Change in producti
 # Enable CORS for all routes with specific configuration
 CORS(app,
     resources={r"/*": {
-        "origins": ["http://localhost:3000", "http://localhost:3001"],
+        "origins": allowed_origins,
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
-        "supports_credentials": True,
-        "expose_headers": ["Set-Cookie"]
+        "supports_credentials": True
     }})
 
 # MongoDB connection with error handling

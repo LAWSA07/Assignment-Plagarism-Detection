@@ -5,7 +5,7 @@ A web-based application for managing academic assignments, built with React and 
 ## Features
 
 - **User Authentication**: Separate login for students and professors
-- **Professor Dashboard**: 
+- **Professor Dashboard**:
   - Create and manage assignments
   - Upload question files (PDF, DOC, DOCX)
   - View student submissions
@@ -90,4 +90,67 @@ gdg_project/
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Deployment Instructions
+
+### Frontend (Vercel)
+
+1. Sign up for a [Vercel](https://vercel.com) account
+2. Install Vercel CLI:
+   ```bash
+   npm install -g vercel
+   ```
+3. Navigate to the client directory:
+   ```bash
+   cd client
+   ```
+4. Deploy to Vercel:
+   ```bash
+   vercel
+   ```
+5. Set environment variables in the Vercel dashboard:
+   - `REACT_APP_API_URL` - URL of your backend API (e.g., https://your-api.render.com/api)
+
+### Backend (Render)
+
+1. Sign up for a [Render](https://render.com) account
+2. Create a new Web Service
+3. Connect your repository
+4. Configure the service:
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `gunicorn -c gunicorn.conf.py app:app`
+   - **Environment Variables**:
+     - `FLASK_ENV` = production
+     - `SECRET_KEY` = [your-secure-secret-key]
+     - `MONGODB_URI` = [your-mongodb-connection-string]
+     - `ALLOWED_ORIGINS` = https://your-frontend-domain.vercel.app
+
+## Environment Variables
+
+### Frontend (.env)
+```
+REACT_APP_API_URL=http://localhost:5000/api
+```
+
+### Backend (.env)
+```
+FLASK_ENV=development
+SECRET_KEY=your-dev-secret-key
+MONGODB_URI=mongodb://localhost:27017/assignment_checker
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
+```
+
+## Additional Configuration
+
+1. Update the API domain in `client/vercel.json`
+2. Update the frontend domain in `flask-server/app.py`
+
+## Post-Deployment Verification
+
+After deploying both frontend and backend:
+
+1. Verify API connectivity
+2. Test authentication flow
+3. Test file uploads and downloads
+4. Check CORS configuration by monitoring network requests

@@ -1,0 +1,12 @@
+{
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/.*", "dest": "/index.html" }
+  ],
+  "env": {
+    "REACT_APP_API_URL": "https://your-api-domain.render.com/api"
+  },
+  "buildCommand": "npm run build",
+  "outputDirectory": "build",
+  "framework": "create-react-app"
+}

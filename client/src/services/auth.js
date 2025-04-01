@@ -1,6 +1,13 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+// Environment-aware API URL
+const API_URL = process.env.REACT_APP_API_URL || (
+  process.env.NODE_ENV === 'production'
+  ? 'https://your-api-domain.render.com/api'  // Replace with your actual production API URL
+  : 'http://localhost:5000/api'
+);
+
+console.log('Using API URL:', API_URL);  // For debugging during deployment
 
 // Create axios instance with default config
 const authApi = axios.create({
