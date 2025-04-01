@@ -32,7 +32,7 @@ ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', 'http://localhost:3000,http://loc
 allowed_origins = ALLOWED_ORIGINS.split(',')
 
 # Use actual deployment URLs
-RENDER_BACKEND_URL = 'https://assignment-plagarism-detection-1.onrender.com'  # Corrected URL
+RENDER_BACKEND_URL = 'https://assignment-plagarism-detection.onrender.com'  # Corrected URL - removed the -1
 VERCEL_FRONTEND_URL = 'https://assignment-plagarism-detection-8mll.vercel.app'  # Actual Vercel domain
 
 logger.info(f"Production status: {IS_PRODUCTION}")

@@ -4,7 +4,7 @@
     { "src": "/.*", "dest": "/index.html" }
   ],
   "env": {
-    "REACT_APP_API_URL": "https://assignment-plagarism-detection-1.onrender.com/api"
+    "REACT_APP_API_URL": "https://assignment-plagarism-detection.onrender.com/api"
   },
   "buildCommand": "npm run build",
   "outputDirectory": "build",

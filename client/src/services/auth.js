@@ -3,7 +3,7 @@ import axios from 'axios';
 // Environment-aware API URL
 const API_URL = process.env.REACT_APP_API_URL || (
   process.env.NODE_ENV === 'production'
-  ? 'https://assignment-plagarism-detection-1.onrender.com/api'  // Updated with actual Render URL
+  ? 'https://assignment-plagarism-detection.onrender.com/api'  // Corrected URL without the -1
   : 'http://localhost:5000/api'
 );
 
