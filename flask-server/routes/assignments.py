@@ -54,30 +54,30 @@ def validate_file(file):
     """Validate file upload."""
     if not file:
         return None, 'No file provided'
-    
+
     if not file.filename:
         return None, 'No filename provided'
-    
+
     if not allowed_file(file.filename):
         return None, f'Invalid file type. Allowed types are: {", ".join(ALLOWED_EXTENSIONS)}'
-    
+
     # Check file size (10MB limit)
     file.seek(0, 2)  # Seek to end of file
     size = file.tell()  # Get current position (file size)
     file.seek(0)  # Reset file position
-    
+
     if size > MAX_FILE_SIZE:
         return None, 'File size exceeds 10MB limit'
-    
+
     # Check if file is empty
     if size == 0:
         return None, 'File is empty'
-    
+
     # Check content type
     content_type = file.content_type
     if content_type not in ['application/pdf']:
         return None, 'Only PDF files are allowed'
-    
+
     return file, None
 
 @assignments_bp.route('/api/student/assignments', methods=['GET'])
@@ -91,7 +91,7 @@ def get_student_assignments():
 
         # Get all active assignments
         assignments = Assignment.objects(is_active=True)
-        
+
         # Get submissions for this student
         submissions = Submission.objects(student=user)
         submission_map = {str(sub.assignment.id): sub for sub in submissions}
@@ -135,21 +135,21 @@ def get_professor_assignments():
 def create_assignment():
     try:
         logger.info("Starting assignment creation...")
-        
+
         # Log all form data
         logger.info(f"Form data: {request.form}")
         logger.info(f"Files: {request.files}")
-        
+
         # Get form data
         name = request.form.get('name')
         course = request.form.get('course')
         description = request.form.get('description')
         due_date = request.form.get('due_date')
         sections = request.form.getlist('sections[]')
-        
+
         # Log received data
         logger.info(f"Received data: name={name}, course={course}, description={description}, due_date={due_date}, sections={sections}")
-        
+
         # Validate required fields
         if not all([name, course, description, due_date]):
             missing_fields = [field for field, value in {
@@ -177,10 +177,10 @@ def create_assignment():
         if 'question_file' not in request.files:
             logger.error("No file uploaded")
             return jsonify({'error': 'No file uploaded'}), 400
-        
+
         file = request.files['question_file']
         logger.info(f"Received file: {file.filename}, type: {file.content_type}, size: {file.content_length if hasattr(file, 'content_length') else 'unknown'}")
-        
+
         file_validation_result, error_message = validate_file(file)
         if error_message:
             logger.error(f"File validation error: {error_message}")
@@ -193,7 +193,7 @@ def create_assignment():
         except Exception as e:
             logger.error(f"Error getting current user: {str(e)}")
             return jsonify({'error': 'Could not verify professor account'}), 401
-        
+
         # Create new assignment
         try:
             logger.info("Creating new assignment...")
@@ -205,7 +205,7 @@ def create_assignment():
                 sections=sections,
                 professor=current_user
             )
-            
+
             # Save the file
             logger.info("Saving file...")
             new_assignment.question_file.put(
@@ -213,21 +213,21 @@ def create_assignment():
                 filename=secure_filename(file.filename),
                 content_type=file.content_type
             )
-            
+
             # Validate and save the assignment
             logger.info("Validating assignment...")
             new_assignment.validate()  # This will run the clean method
-            
+
             logger.info("Saving assignment...")
             new_assignment.save()
-            
+
             logger.info(f"Assignment created successfully with ID: {new_assignment.id}")
             return jsonify(new_assignment.to_json()), 201
 
         except ValidationError as e:
             logger.error(f"Validation error: {str(e)}")
             return jsonify({'error': str(e)}), 400
-            
+
     except Exception as e:
         logger.error(f"Error creating assignment: {str(e)}", exc_info=True)  # Added exc_info for stack trace
         return jsonify({'error': 'Internal server error occurred while creating assignment'}), 500
@@ -319,7 +319,7 @@ def submit_assignment(assignment_id):
 def download_assignment(assignment_id):
     try:
         logger.info(f"Attempting to download assignment {assignment_id}")
-        
+
         # Validate assignment ID
         if not assignment_id:
             logger.error("No assignment ID provided")
@@ -346,13 +346,13 @@ def download_assignment(assignment_id):
             # Get file metadata
             content_type = assignment.question_file.content_type or 'application/pdf'
             filename = assignment.question_file.filename or f"{assignment.name}.pdf"
-            
+
             logger.info(f"Successfully retrieved file for assignment {assignment_id}")
             logger.info(f"File details - Name: {filename}, Type: {content_type}, Size: {len(file_data)} bytes")
 
             # Create file stream
             file_stream = io.BytesIO(file_data)
-            
+
             return send_file(
                 file_stream,
                 mimetype=content_type,
@@ -380,7 +380,7 @@ def check_submission_status(submission_id):
         # Check if user has permission to view this submission
         user_id = session['user_id']
         user_type = session.get('user_type')
-        
+
         if user_type == 'student' and str(submission.student.id) != user_id:
             return jsonify({'error': 'Not authorized to view this submission'}), 403
         elif user_type == 'professor' and str(submission.assignment.professor.id) != user_id:
@@ -405,7 +405,7 @@ def get_assignment_submissions(assignment_id):
         # Verify user is logged in
         if not session.get('user_id'):
             return jsonify({'error': 'Not authenticated'}), 401
-        
+
         current_user = User.objects.get(id=session['user_id'])
         assignment = Assignment.objects.get(id=assignment_id)
 
@@ -413,7 +413,7 @@ def get_assignment_submissions(assignment_id):
         if current_user.user_type == 'professor':
             if str(assignment.professor.id) != str(current_user.id):
                 return jsonify({'error': 'Not authorized'}), 403
-            
+
             submissions = Submission.objects(assignment=assignment)
             return jsonify([sub.to_json() for sub in submissions]), 200
 
@@ -421,7 +421,7 @@ def get_assignment_submissions(assignment_id):
         elif current_user.user_type == 'student':
             if current_user.section not in assignment.sections:
                 return jsonify({'error': 'Not authorized'}), 403
-            
+
             submissions = Submission.objects(
                 assignment=assignment,
                 student=current_user
@@ -432,4 +432,4 @@ def get_assignment_submissions(assignment_id):
         return jsonify({'error': 'Assignment not found'}), 404
     except Exception as e:
         print(f"Error fetching submissions: {str(e)}")
-        return jsonify({'error': 'Internal server error'}), 500 
+        return jsonify({'error': 'Internal server error'}), 500

@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SubmitAssignmentModal from './SubmitAssignmentModal';
-import { checkSession, fetchStudentAssignments, downloadAssignment, logout } from '../../services/auth';
 import './Dashboard.css';
 
 const StudentDashboard = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('assignments');
     const [assignments, setAssignments] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedAssignment, setSelectedAssignment] = useState(null);
     const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
@@ -19,63 +18,144 @@ const StudentDashboard = () => {
     });
 
     useEffect(() => {
-        const verifyAndLoadData = async () => {
-            try {
-                console.log('Verifying student session...');
-                const sessionData = await checkSession();
-                console.log('Session data:', sessionData);
-
-                if (!sessionData.logged_in || !sessionData.user) {
-                    throw new Error('Not logged in');
-                }
-
-                // Check if user is a student
-                if (sessionData.user.user_type !== 'student') {
-                    console.log('User is not a student, redirecting to professor dashboard');
-                    navigate('/professor-dashboard');
-                    return;
-                }
-
-                // Load assignments
-                await loadAssignments();
-            } catch (error) {
-                console.error('Session verification error:', error);
-                setError('Session verification failed. Please log in again.');
-                // Clear any stored user data
-                localStorage.removeItem('user');
-                navigate('/login');
-            } finally {
-                setLoading(false);
-            }
-        };
-
         verifyAndLoadData();
     }, [navigate]);
 
-    const loadAssignments = async () => {
+    const verifyAndLoadData = async () => {
         try {
-            const data = await fetchStudentAssignments();
-            setAssignments(data);
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) {
+                console.log('No user found, redirecting to login');
+                navigate('/login');
+                return;
+            }
+
+            // Check if user is a student
+            if (user.user_type !== 'student') {
+                console.log('User is not a student, redirecting to professor dashboard');
+                navigate('/professor/dashboard');
+                return;
+            }
+
+            await verifySession();
         } catch (error) {
-            console.error('Error loading assignments:', error);
-            setError('Failed to load assignments');
+            setError('Failed to verify session. Please try logging in again.');
+            console.error('Session verification error:', error);
+            navigate('/login');
         }
     };
 
-    const handleDownload = async (assignmentId) => {
+    const verifySession = async () => {
         try {
-            const blob = await downloadAssignment(assignmentId);
+            console.log('Verifying student session...');
+            const response = await fetch('http://localhost:5000/api/auth/check-session', {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Session verification failed');
+            }
+
+            const data = await response.json();
+            console.log('Session check response:', data);
+
+            if (!data.logged_in) {
+                console.log('Not logged in, redirecting to login');
+                localStorage.removeItem('user');
+                navigate('/login');
+                return;
+            }
+
+            if (data.user_type !== 'student') {
+                console.log('User is not a student, redirecting to professor dashboard');
+                navigate('/professor/dashboard');
+                return;
+            }
+
+            // Update local storage with latest user data
+            localStorage.setItem('user', JSON.stringify(data.user));
+            await fetchAssignments();
+        } catch (error) {
+            console.error('Session verification error:', error);
+            localStorage.removeItem('user');
+            navigate('/login');
+        }
+    };
+
+    const fetchAssignments = async () => {
+        try {
+            setIsLoading(true);
+            const response = await fetch('http://localhost:5000/api/student/assignments', {
+                method: 'GET',
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('Assignments fetched:', data);
+            setAssignments(data);
+        } catch (error) {
+            console.error('Error fetching assignments:', error);
+            setError('Failed to fetch assignments');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleDownload = async (assignment) => {
+        if (!assignment || !assignment.id) {
+            console.error('Invalid assignment data:', assignment);
+            alert('Cannot download this assignment. Invalid assignment data.');
+            return;
+        }
+
+        try {
+            setDownloadingAssignment(assignment.id);
+            console.log('Downloading assignment:', assignment.id);
+
+            const response = await fetch(`http://localhost:5000/api/assignments/${assignment.id}/download`, {
+                method: 'GET',
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to download assignment');
+            }
+
+            // Check content type
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/pdf')) {
+                console.warn('Unexpected content type:', contentType);
+            }
+
+            const blob = await response.blob();
+            if (blob.size === 0) {
+                throw new Error('Downloaded file is empty');
+            }
+
+            console.log('File downloaded successfully. Size:', blob.size, 'Type:', blob.type);
+
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `assignment-${assignmentId}.pdf`;
+            a.download = `${assignment.name || 'assignment'}.pdf`;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
         } catch (error) {
             console.error('Error downloading assignment:', error);
-            setError('Failed to download assignment');
+            alert(error.message || 'Failed to download assignment file. Please try again later.');
+        } finally {
+            setDownloadingAssignment(null);
         }
     };
 
@@ -101,13 +181,20 @@ const StudentDashboard = () => {
 
     const handleLogout = async () => {
         try {
-            await logout();
-            // Clear any stored user data
-            localStorage.removeItem('user');
-            navigate('/login');
+            const response = await fetch('http://localhost:5000/api/auth/logout', {
+                method: 'POST',
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                localStorage.removeItem('user');
+                navigate('/login');
+            } else {
+                throw new Error('Logout failed');
+            }
         } catch (error) {
-            console.error('Logout error:', error);
-            setError('Failed to logout');
+            console.error('Logout failed:', error);
+            alert('Failed to logout. Please try again.');
         }
     };
 
@@ -132,10 +219,6 @@ const StudentDashboard = () => {
             ? Math.round(assignments.reduce((acc, curr) => acc + (curr.score || 0), 0) / assignments.length) + '%'
             : 'N/A'
     };
-
-    if (loading) {
-        return <div>Loading...</div>;
-    }
 
     if (error) {
         return (
@@ -262,7 +345,7 @@ const StudentDashboard = () => {
                     </div>
                 </div>
 
-                {loading ? (
+                {isLoading ? (
                     <div className="loading">
                         <div className="loading-spinner"></div>
                         <p>Loading assignments...</p>
@@ -354,7 +437,7 @@ const StudentDashboard = () => {
                                         backgroundColor: 'white',
                                         color: '#3498db',
                                         cursor: 'pointer'
-                                    }} onClick={() => handleDownload(assignment._id)}>
+                                    }} onClick={() => handleDownload(assignment)}>
                                         Download
                                     </button>
                                     <button className="action-btn primary" style={{

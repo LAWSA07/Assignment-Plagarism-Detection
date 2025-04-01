@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import CreateAssignmentModal from './CreateAssignmentModal';
 import PlagiarismReportModal from './PlagiarismReportModal';
 import './Dashboard.css';
-import { checkSession, fetchProfessorAssignments, logout, api } from '../../services/auth';
 
 const ProfessorDashboard = () => {
     const navigate = useNavigate();
@@ -14,46 +13,75 @@ const ProfessorDashboard = () => {
     const [selectedSubmission, setSelectedSubmission] = useState(null);
     const [isPlagiarismModalOpen, setIsPlagiarismModalOpen] = useState(false);
     const [setActiveTab] = useState('assignments');
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
 
     useEffect(() => {
-        const verifyAndLoadData = async () => {
-            try {
-                console.log('Verifying professor session...');
-                const sessionData = await checkSession();
-                console.log('Session data:', sessionData);
-
-                if (!sessionData.logged_in || !sessionData.user) {
-                    throw new Error('Not logged in');
-                }
-
-                // Check if user is a professor
-                if (sessionData.user.user_type !== 'professor') {
-                    console.log('User is not a professor, redirecting to student dashboard');
-                    navigate('/student-dashboard');
-                    return;
-                }
-
-                // Load assignments
-                await loadAssignments();
-            } catch (error) {
-                console.error('Session verification error:', error);
-                setError('Session verification failed. Please log in again.');
-                // Clear any stored user data
-                localStorage.removeItem('user');
+        try {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) {
+                console.log('No user found, redirecting to login');
                 navigate('/login');
-            } finally {
-                setLoading(false);
+                return;
             }
-        };
 
-        verifyAndLoadData();
+            // Check if user is a professor
+            if (user.user_type !== 'professor') {
+                console.log('User is not a professor, redirecting to student dashboard');
+                navigate('/student/dashboard');
+                return;
+            }
+
+            verifySession();
+        } catch (error) {
+            console.error('Session verification error:', error);
+            navigate('/login');
+        }
     }, [navigate]);
 
-    const loadAssignments = async () => {
+    const verifySession = async () => {
         try {
-            const data = await fetchProfessorAssignments();
+            console.log('Verifying professor session...');
+            const response = await fetch('http://localhost:5000/api/auth/check-session', {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Session verification failed');
+            }
+
+            const data = await response.json();
+            console.log('Session check response:', data);
+
+            if (!data.logged_in || data.user_type !== 'professor') {
+                console.log('Not logged in as professor, redirecting to login');
+                localStorage.removeItem('user');
+                navigate('/login');
+                return;
+            }
+
+            localStorage.setItem('user', JSON.stringify(data.user));
+            fetchAssignments(); // Fetch professor-specific data
+        } catch (error) {
+            console.error('Session verification error:', error);
+            localStorage.removeItem('user');
+            navigate('/login');
+        }
+    };
+
+    const fetchAssignments = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/api/professor/assignments', {
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch assignments');
+            }
+
+            const data = await response.json();
             setAssignments(data);
 
             // Fetch submissions for each assignment
@@ -61,34 +89,45 @@ const ProfessorDashboard = () => {
                 fetchSubmissions(assignment.id);
             });
         } catch (error) {
-            console.error('Error loading assignments:', error);
-            setError('Failed to load assignments');
+            console.error('Error fetching assignments:', error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
     const fetchSubmissions = async (assignmentId) => {
         try {
-            const response = await api.get(`/assignments/${assignmentId}/submissions`);
-            const data = response.data;
+            const response = await fetch(`http://localhost:5000/api/assignments/${assignmentId}/submissions`, {
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch submissions');
+            }
+
+            const data = await response.json();
             setSubmissions(prev => ({
                 ...prev,
                 [assignmentId]: data
             }));
         } catch (error) {
             console.error(`Error fetching submissions for assignment ${assignmentId}:`, error);
-            setError(`Failed to load submissions for assignment ${assignmentId}`);
         }
     };
 
     const handleLogout = async () => {
         try {
-            await logout();
-            // Clear any stored user data
-            localStorage.removeItem('user');
-            navigate('/login');
+            const response = await fetch('http://localhost:5000/api/logout', {
+                method: 'POST',
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                localStorage.removeItem('user');
+                navigate('/login');
+            }
         } catch (error) {
-            console.error('Logout error:', error);
-            setError('Failed to logout');
+            console.error('Logout failed:', error);
         }
     };
 
@@ -165,14 +204,6 @@ const ProfessorDashboard = () => {
             </div>
         );
     };
-
-    if (loading) {
-        return <div>Loading...</div>;
-    }
-
-    if (error) {
-        return <div>Error: {error}</div>;
-    }
 
     return (
         <div className="dashboard-container">

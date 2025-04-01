@@ -83,17 +83,11 @@ const Login = () => {
 
     try {
       if (isLogin) {
-        // Show loading message
-        setError('Connecting to server... This might take a few moments on the first request.');
-
         const user = await login({
           email: formData.email.trim(),
           password: formData.password,
           isStudent: isStudent
         });
-
-        // Clear loading message
-        setError('');
 
         // Check if user type matches the portal type
         if (isStudent && user.user_type === 'professor') {
@@ -111,9 +105,6 @@ const Login = () => {
           navigate('/student/dashboard');
         }
       } else {
-        // Show loading message for registration
-        setError('Creating your account... This might take a few moments.');
-
         await register({
           email: formData.email.trim(),
           password: formData.password,

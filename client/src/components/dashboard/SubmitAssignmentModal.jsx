@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { submitAssignment, checkSubmissionStatus } from '../../services/dashboard';
+import React, { useState, useEffect } from 'react';
 import './Dashboard.css';
 
 const SubmitAssignmentModal = ({ isOpen, onClose, assignment, onSubmissionComplete }) => {
@@ -17,9 +16,17 @@ const SubmitAssignmentModal = ({ isOpen, onClose, assignment, onSubmissionComple
     setProcessingResults(null);
   };
 
-  const handleProcessingStatus = async (submissionId) => {
+  const checkProcessingStatus = async (submissionId) => {
     try {
-      const data = await checkSubmissionStatus(submissionId);
+      const response = await fetch(`http://localhost:5000/api/submissions/${submissionId}/status`, {
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to check processing status');
+      }
+
+      const data = await response.json();
       setProcessingStatus(data.processing_status);
 
       if (data.processing_status === 'Completed') {
@@ -31,7 +38,7 @@ const SubmitAssignmentModal = ({ isOpen, onClose, assignment, onSubmissionComple
         setError(data.processing_error || 'Processing failed');
       } else if (data.processing_status === 'Processing') {
         // Continue checking status
-        setTimeout(() => handleProcessingStatus(submissionId), 2000);
+        setTimeout(() => checkProcessingStatus(submissionId), 2000);
       }
     } catch (error) {
       console.error('Error checking processing status:', error);
@@ -58,12 +65,23 @@ const SubmitAssignmentModal = ({ isOpen, onClose, assignment, onSubmissionComple
       const formData = new FormData();
       formData.append('answerFile', answerFile);
 
-      const submission = await submitAssignment(assignment.id, formData);
+      const response = await fetch(`http://localhost:5000/api/assignments/submit/${assignment.id}`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to submit assignment');
+      }
+
+      const submission = await response.json();
       setProcessingStatus(submission.processing_status);
 
       // Start checking processing status
       if (submission.processing_status === 'Pending' || submission.processing_status === 'Processing') {
-        setTimeout(() => handleProcessingStatus(submission.id), 2000);
+        setTimeout(() => checkProcessingStatus(submission.id), 2000);
       }
 
       onSubmissionComplete(submission);

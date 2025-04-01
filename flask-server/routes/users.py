@@ -20,7 +20,7 @@ def get_professor_profile():
     try:
         # Get the current user from the session
         current_user = User.objects.get(id=request.user_id)
-        
+
         # Return the professor's profile data
         return jsonify({
             'success': True,
@@ -48,7 +48,7 @@ def update_professor_profile():
     try:
         data = request.get_json()
         current_user = User.objects.get(id=request.user_id)
-        
+
         # Update the user fields if they are provided in the request
         if 'firstName' in data:
             current_user.first_name = data['firstName']
@@ -62,10 +62,10 @@ def update_professor_profile():
             current_user.office_hours = data['officeHours']
         if 'officeLocation' in data:
             current_user.office_location = data['officeLocation']
-        
+
         # Save the updated user
         current_user.save()
-        
+
         return jsonify({
             'success': True,
             'message': 'Profile updated successfully',
@@ -83,4 +83,4 @@ def update_professor_profile():
         return jsonify({
             'success': False,
             'message': 'Failed to update professor profile'
-        }), 500 
+        }), 500

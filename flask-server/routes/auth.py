@@ -4,7 +4,6 @@ from models.user import User
 import logging
 from datetime import datetime
 from mongoengine.errors import NotUniqueError, ValidationError
-from flask_cors import cross_origin
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -12,12 +11,8 @@ logger = logging.getLogger(__name__)
 
 auth_bp = Blueprint('auth', __name__)
 
-@auth_bp.route('/register', methods=['POST', 'OPTIONS'])
-@cross_origin(supports_credentials=True)
+@auth_bp.route('/api/auth/register', methods=['POST'])
 def register():
-    if request.method == 'OPTIONS':
-        return handle_preflight()
-
     try:
         data = request.get_json()
         if not data:
@@ -28,71 +23,47 @@ def register():
         password = data.get('password')
         first_name = data.get('firstName')
         last_name = data.get('lastName')
-        is_student = data.get('isStudent', True)  # Default to student if not specified
+        is_student = data.get('isStudent', True)
         section = data.get('section')
-
-        # Log registration attempt
-        logger.info(f"Registration attempt for email: {email}")
 
         # Validate required fields
         if not all([email, password, first_name, last_name]):
             return jsonify({'error': 'All fields are required'}), 400
 
-        # Additional validation for students only
         if is_student and not section:
             return jsonify({'error': 'Section is required for students'}), 400
 
-        # Check if user already exists
-        if User.objects(email=email).first():
-            return jsonify({'error': 'Email already registered'}), 400
+        # Create new user
+        new_user = User(
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            user_type='student' if is_student else 'professor',
+            is_professor=not is_student,
+            section=section if is_student else None
+        )
+        new_user.set_password(password)
+        new_user.save()
 
-        try:
-            # Create new user with proper user_type
-            new_user = User(
-                email=email,
-                first_name=first_name,
-                last_name=last_name,
-                user_type='student' if is_student else 'professor',
-                is_professor=not is_student,
-                section=section if is_student else None
-            )
-            new_user.set_password(password)
-            new_user.save()
+        # Set session
+        session['user_id'] = str(new_user.id)
+        session['user_type'] = new_user.user_type
+        session.permanent = True
 
-            # Set session
-            session['user_id'] = str(new_user.id)
-            session['user_type'] = 'student' if is_student else 'professor'
-            session.permanent = True
+        return jsonify({
+            'success': True,
+            'message': 'Registration successful',
+            'user': new_user.to_json()
+        }), 201
 
-            # Log successful registration
-            logger.info(f"Successfully registered user: {email}")
-
-            return jsonify({
-                'success': True,
-                'message': 'Registration successful',
-                'user': new_user.to_json()
-            }), 201
-
-        except NotUniqueError:
-            logger.error(f"Duplicate email error for: {email}")
-            return jsonify({'error': 'Email already registered'}), 400
-        except ValidationError as e:
-            logger.error(f"Validation error during registration: {str(e)}")
-            return jsonify({'error': str(e)}), 400
-        except Exception as e:
-            logger.error(f"Error creating user: {str(e)}")
-            return jsonify({'error': 'Failed to create user'}), 500
-
+    except NotUniqueError:
+        return jsonify({'error': 'Email already registered'}), 400
     except Exception as e:
         logger.error(f"Registration error: {str(e)}")
-        return jsonify({'error': 'Registration failed', 'details': str(e)}), 500
+        return jsonify({'error': 'Registration failed'}), 500
 
-@auth_bp.route('/login', methods=['POST', 'OPTIONS'])
-@cross_origin(supports_credentials=True)
+@auth_bp.route('/api/auth/login', methods=['POST'])
 def login():
-    if request.method == 'OPTIONS':
-        return handle_preflight()
-
     try:
         data = request.get_json()
         if not data:
@@ -105,37 +76,24 @@ def login():
         if not email or not password:
             return jsonify({'error': 'Email and password are required'}), 400
 
-        # Log login attempt
-        logger.info(f"Login attempt for email: {email} as {'student' if is_student else 'professor'}")
-
-        # Find user by email
+        # Find user
         user = User.objects(email=email).first()
-        if not user:
+        if not user or not user.check_password(password):
             return jsonify({'error': 'Invalid email or password'}), 401
 
-        # Check password
-        if not user.check_password(password):
-            return jsonify({'error': 'Invalid email or password'}), 401
-
-        # Check if user type matches the login portal
+        # Verify user type
         if is_student != (user.user_type == 'student'):
             portal_type = 'student' if is_student else 'professor'
-            actual_type = user.user_type
-            return jsonify({
-                'error': f'Please use the {actual_type} portal to login. You are trying to login through the {portal_type} portal.'
-            }), 401
+            return jsonify({'error': f'Please use the {user.user_type} portal to login'}), 401
 
-        # Update last login
-        user.last_login = datetime.utcnow()
-        user.save()
-
-        # Set session
+        # Set session data
+        session.clear()  # Clear any existing session
         session['user_id'] = str(user.id)
         session['user_type'] = user.user_type
+        session['email'] = user.email
         session.permanent = True
 
-        # Log successful login
-        logger.info(f"Successful login for {email} as {user.user_type}")
+        logger.info(f"Login successful for {email}. Session data: {dict(session)}")
 
         return jsonify({
             'success': True,
@@ -147,31 +105,26 @@ def login():
         logger.error(f"Login error: {str(e)}")
         return jsonify({'error': 'Login failed'}), 500
 
-@auth_bp.route('/check-session', methods=['GET', 'OPTIONS'])
-@cross_origin(supports_credentials=True)
+@auth_bp.route('/api/auth/check-session', methods=['GET'])
 def check_session():
-    if request.method == 'OPTIONS':
-        return handle_preflight()
-
     try:
+        logger.info(f"Checking session. Current session data: {dict(session)}")
+
         user_id = session.get('user_id')
         if not user_id:
-            return jsonify({
-                'logged_in': False,
-                'user': None
-            })
+            logger.info("No user_id in session")
+            return jsonify({'logged_in': False})
 
         user = User.objects(id=user_id).first()
         if not user:
+            logger.info(f"No user found for id: {user_id}")
             session.clear()
-            return jsonify({
-                'logged_in': False,
-                'user': None
-            })
+            return jsonify({'logged_in': False})
 
+        logger.info(f"Session valid for user: {user.email}")
         return jsonify({
             'logged_in': True,
-            'user_type': 'student' if not user.is_professor else 'professor',
+            'user_type': user.user_type,
             'user': user.to_json()
         })
 
@@ -179,36 +132,19 @@ def check_session():
         logger.error(f"Session check error: {str(e)}")
         return jsonify({'error': 'Session check failed'}), 500
 
-@auth_bp.route('/logout', methods=['POST', 'OPTIONS'])
-@cross_origin(supports_credentials=True)
+@auth_bp.route('/api/auth/logout', methods=['POST'])
 def logout():
-    if request.method == 'OPTIONS':
-        return handle_preflight()
-
-    try:
-        session.clear()
-        return jsonify({
-            'success': True,
-            'message': 'Logout successful'
-        })
-    except Exception as e:
-        logger.error(f"Logout error: {str(e)}")
-        return jsonify({'error': 'Logout failed'}), 500
+    session.clear()
+    return jsonify({
+        'success': True,
+        'message': 'Logout successful'
+    })
 
 def handle_preflight():
-    """Handle CORS preflight requests"""
     response = jsonify({'message': 'Preflight request handled'})
-    origin = request.headers.get('Origin')
-    if origin in allowed_origins:
-        response.headers.update({
-            'Access-Control-Allow-Origin': origin,
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
-            'Access-Control-Allow-Credentials': 'true',
-            'Access-Control-Expose-Headers': 'Content-Type, Authorization',
-            'Access-Control-Max-Age': '3600'
-        })
-    return response
+    response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+    return response, 200
 
 # Authentication middleware
 def token_required(f):

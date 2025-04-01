@@ -14,25 +14,229 @@ body {
   color: var(--text-light);
 }
 
-/* Dashboard Container */
+/* Dashboard Layout */
 .dashboard-container {
-  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 60px); /* Adjust based on header height */
   max-width: 1200px;
-  margin: 0 auto;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  margin: var(--spacing-lg) auto;
+  padding: var(--spacing-xl);
+  background-color: var(--surface-color); /* Use surface color for main content area */
+  border-radius: var(--border-radius-lg); /* ADDED rounded corners */
+  border: 1px solid var(--border-color); /* Re-add subtle border */
+  box-shadow: var(--shadow-lg); /* Use larger shadow for main container */
+  overflow: hidden; /* Ensure children don't overflow rounded corners */
 }
 
-/* Dashboard Header */
 .dashboard-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-xl);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .dashboard-header h1 {
   margin: 0;
-  color: #2c3e50;
+  font-size: 1.875rem;
+}
+
+.dashboard-header .button,
+.dashboard-header button {
+  margin-left: var(--spacing-md);
+}
+
+.dashboard-header .logout-btn {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+.dashboard-header .logout-btn:hover {
+  background-color: #DC2626;
+}
+
+/* Tabs */
+.tab-navigation {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: var(--spacing-xl);
+}
+
+.tab-button {
+  padding: var(--spacing-md) var(--spacing-lg);
+  cursor: pointer;
+  border: none;
+  background-color: transparent;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.tab-button.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+}
+
+.tab-button:hover:not(.active) {
+  color: var(--text-primary);
+  border-bottom-color: var(--border-color);
+}
+
+.tab-content {
+  padding-top: var(--spacing-lg);
+}
+
+/* Filters */
+.filters {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.filters select {
+  min-width: 150px;
+  margin-bottom: 0;
+}
+
+/* Assignments Table / List */
+.assignments-table,
+.submissions-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  margin-top: var(--spacing-lg);
+}
+
+.assignments-table th,
+.assignments-table td,
+.submissions-table th,
+.submissions-table td {
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+  padding: var(--spacing-md);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.assignments-table thead,
+.submissions-table thead {
+  background-color: var(--surface-color);
+}
+
+.assignments-table th,
+.submissions-table th {
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-primary);
+}
+
+.assignments-table tbody tr:nth-child(even),
+.submissions-table tbody tr:nth-child(even) {
+  background-color: var(--background-color);
+}
+
+.assignments-table td,
+.submissions-table td {
+  color: var(--text-secondary);
+}
+
+.assignments-table .actions button,
+.submissions-table .actions button {
+  margin-right: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: 0.875rem;
+}
+
+.status-badge {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: inline-block;
+  text-align: center;
+  min-width: 80px;
+}
+
+.status-Not.Started {
+  background-color: #FEF3C7;
+  color: #92400E;
+}
+
+.status-Submitted {
+  background-color: #DBEAFE;
+  color: #1E40AF;
+}
+
+.status-Graded {
+  background-color: #D1FAE5;
+  color: #065F46;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: var(--surface-color);
+  padding: var(--spacing-xxl);
+  border-radius: var(--border-radius-lg);
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: var(--shadow-lg);
+}
+
+.close-button {
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.close-button:hover {
+  color: var(--text-primary);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--border-color);
+}
+
+/* Make status badge text a bit smaller and bold */
+.status-badge {
+    font-size: 0.8rem;
+    font-weight: 700;
 }
 
 /* Buttons */
@@ -78,12 +282,12 @@ body {
 }
 
 .stat-card {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  background: var(--surface-color);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
   text-align: center;
-  transition: transform 0.2s;
+  border: 1px solid var(--border-color);
 }
 
 .stat-card:hover {
@@ -92,21 +296,23 @@ body {
 
 .stat-card h3 {
   margin: 0;
-  font-size: 1rem;
-  color: #666;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-xs);
 }
 
 .stat-number {
-  font-size: 2.5rem;
-  font-weight: 600;
-  margin: 0.5rem 0;
-  color: #2c3e50;
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--primary-color);
 }
 
 .stat-label {
-  font-size: 0.875rem;
-  color: #666;
-  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: var(--spacing-sm);
 }
 
 /* Content Section */

@@ -1,170 +1,152 @@
 import axios from 'axios';
 
-// Get the API URL from environment variables
-const API_URL = process.env.REACT_APP_API_URL || 'https://assignment-plagarism-detection.onrender.com/api';
-
-console.log('Using API URL:', API_URL);
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 // Create axios instance with default config
-export const api = axios.create({
+const authApi = axios.create({
     baseURL: API_URL,
-    timeout: 30000,
-    withCredentials: true,
     headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-    }
+        'Content-Type': 'application/json'
+    },
+    withCredentials: true,
+    timeout: 10000 // 10 second timeout
 });
 
-// Add request interceptor for debugging
-api.interceptors.request.use(
-    (config) => {
-        console.log('Making request to:', `${config.baseURL}${config.url}`);
-        return config;
-    },
-    (error) => {
-        console.error('Request error:', error);
-        return Promise.reject(error);
-    }
-);
-
-// Add response interceptor for debugging
-api.interceptors.response.use(
-    (response) => {
-        console.log('Response received:', response.status, response.data);
-        return response;
-    },
-    (error) => {
-        console.error('Response error:', {
-            status: error.response?.status,
-            data: error.response?.data,
-            message: error.message
-        });
-        return Promise.reject(error);
-    }
-);
-
-// Function to validate the server is running
-const validateServer = async () => {
-    try {
-        console.log('Trying health check at:', `${API_URL}/health`);
-        const response = await api.get('/health');
-        console.log('Health check response:', response.data);
-        return true;
-    } catch (error) {
-        console.error('Server validation failed:', {
-            message: error.message,
-            status: error.response?.status,
-            data: error.response?.data
-        });
-        throw new Error('Failed to connect to server. Please try again later.');
-    }
-};
-
-let isServerValidated = false;
-
-// Add request interceptor for server validation
-api.interceptors.request.use(
+// Add request interceptor for error handling
+authApi.interceptors.request.use(
     async config => {
-        // Skip validation for health endpoint to avoid infinite loop
+        // Skip health check for health endpoint to avoid infinite loop
         if (config.url === '/health') {
             return config;
         }
 
-        if (!isServerValidated) {
-            try {
-                await validateServer();
-                isServerValidated = true;
-            } catch (error) {
-                console.error('Server validation failed in interceptor:', error);
-                return Promise.reject(error);
+        try {
+            // Try to connect to server
+            await axios.get(`${API_URL}/health`, {
+                timeout: 3000,
+                withCredentials: true
+            });
+            return config;
+        } catch (error) {
+            console.error('Server health check failed:', error);
+            if (error.code === 'ERR_NETWORK') {
+                throw new Error('Unable to connect to server. Please make sure the server is running.');
+            } else if (error.code === 'ECONNABORTED') {
+                throw new Error('Server connection timed out. Please try again.');
             }
+            throw new Error('Server is not responding. Please try again later.');
         }
-
-        return config;
     },
+    error => Promise.reject(error)
+);
+
+// Add response interceptor to handle errors
+authApi.interceptors.response.use(
+    response => response,
     error => {
-        console.error('Request interceptor error:', error);
-        return Promise.reject(error);
+        console.error('API Error:', error);
+        if (error.code === 'ERR_NETWORK') {
+            throw new Error('Network error. Please check your connection and try again.');
+        }
+        if (error.response?.status === 401) {
+            localStorage.removeItem('user');
+        }
+        throw error;
     }
 );
 
-export const login = async (email, password, isStudent) => {
-    try {
-        console.log('Attempting login with:', { email, isStudent });
-        const response = await api.post('/auth/login', { email, password, isStudent });
-        console.log('Login response:', response.data);
-
-        if (response.data.success) {
-            localStorage.setItem('user', JSON.stringify(response.data.user));
-            return response.data;
-        } else {
-            throw new Error(response.data.message || 'Login failed');
-        }
-    } catch (error) {
-        console.error('Login error:', {
-            message: error.message,
-            status: error.response?.status,
-            data: error.response?.data
-        });
-        throw new Error(error.response?.data?.message || error.message || 'Login failed');
-    }
-};
-
 export const register = async (userData) => {
     try {
-        console.log('Attempting registration with:', userData);
-        const response = await api.post('/register', userData);
+        console.log('Registering user:', userData);
+        const response = await authApi.post('/auth/register', userData);
         console.log('Registration response:', response.data);
 
         if (response.data.success) {
-            // Store user data in localStorage
             localStorage.setItem('user', JSON.stringify(response.data.user));
-            return response.data;
+            return response.data.user;
         } else {
             throw new Error(response.data.message || 'Registration failed');
         }
     } catch (error) {
         console.error('Registration error:', error);
-        throw new Error(error.response?.data?.message || 'Registration failed');
+        if (error.response?.data?.error) {
+            throw new Error(error.response.data.error);
+        } else if (error.message) {
+            throw new Error(error.message);
+        } else {
+            throw new Error('Registration failed. Please try again.');
+        }
+    }
+};
+
+export const login = async (credentials) => {
+    try {
+        console.log('Login attempt with:', credentials);
+
+        // Use fetch directly instead of axios
+        const response = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify(credentials)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Login failed');
+        }
+
+        const data = await response.json();
+        console.log('Login response:', data);
+
+        if (data.success) {
+            localStorage.setItem('user', JSON.stringify(data.user));
+            return data.user;
+        } else {
+            throw new Error(data.message || 'Login failed');
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        throw new Error(error.message || 'Login failed. Please try again.');
     }
 };
 
 export const logout = async () => {
     try {
-        console.log('Attempting logout');
-        const response = await api.post('/logout');
-        console.log('Logout response:', response.data);
-
-        // Clear user data from localStorage
+        const response = await authApi.post('/auth/logout');
         localStorage.removeItem('user');
-        return response.data;
+        return true;
     } catch (error) {
         console.error('Logout error:', error);
-        throw new Error(error.response?.data?.message || 'Logout failed');
+        throw new Error(error.response?.data?.error || error.message || 'Logout failed');
     }
 };
 
 export const checkSession = async () => {
     try {
         console.log('Checking session...');
-        const response = await api.get('/check-session');
+        const response = await authApi.get('/auth/check-session');
         console.log('Session check response:', response.data);
 
         if (response.data.logged_in && response.data.user) {
-            // Store user data in localStorage
             localStorage.setItem('user', JSON.stringify(response.data.user));
-            return response.data;
+            return response.data.user;
         }
 
-        // Clear user data if not logged in
         localStorage.removeItem('user');
-        return response.data;
+        return null;
     } catch (error) {
         console.error('Session check error:', error);
-        // Clear user data on error
         localStorage.removeItem('user');
-        throw new Error(error.response?.data?.message || 'Session check failed');
+        if (error.response?.data?.error) {
+            throw new Error(error.response.data.error);
+        } else if (error.message) {
+            throw new Error(error.message);
+        } else {
+            throw new Error('Session check failed. Please try again.');
+        }
     }
 };
 
@@ -185,38 +167,4 @@ export const isAuthenticated = () => {
 
 export const getToken = () => {
     return localStorage.getItem('token');
-};
-
-// Professor-specific functions
-export const fetchProfessorAssignments = async () => {
-    try {
-        const response = await api.get('/professor/assignments');
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching professor assignments:', error);
-        throw error;
-    }
-};
-
-// Student-specific functions
-export const fetchStudentAssignments = async () => {
-    try {
-        const response = await api.get('/student/assignments');
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching student assignments:', error);
-        throw error;
-    }
-};
-
-export const downloadAssignment = async (assignmentId) => {
-    try {
-        const response = await api.get(`/assignments/${assignmentId}/download`, {
-            responseType: 'blob'
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error downloading assignment:', error);
-        throw error;
-    }
 };
