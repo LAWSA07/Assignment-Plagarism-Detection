@@ -33,15 +33,18 @@ allowed_origins = ALLOWED_ORIGINS.split(',')
 
 # Use actual deployment URLs
 RENDER_BACKEND_URL = 'https://assignment-plagarism-detection.onrender.com'  # Corrected URL - removed the -1
-VERCEL_FRONTEND_URL = 'https://assignment-plagarism-detection-8mll.vercel.app'  # Actual Vercel domain
+VERCEL_FRONTEND_URL = 'https://assignment-plagarism-detection-8mll.vercel.app'  # Previous Vercel domain
+VERCEL_FRONTEND_URL_NEW = 'https://assignment-plagarism-detection-oun4.vercel.app'  # New Vercel domain
 
 logger.info(f"Production status: {IS_PRODUCTION}")
 
-# Always include both production domains to allowed origins
+# Always include all production domains in allowed origins
 if RENDER_BACKEND_URL not in allowed_origins:
     allowed_origins.append(RENDER_BACKEND_URL)
 if VERCEL_FRONTEND_URL not in allowed_origins:
     allowed_origins.append(VERCEL_FRONTEND_URL)
+if VERCEL_FRONTEND_URL_NEW not in allowed_origins:
+    allowed_origins.append(VERCEL_FRONTEND_URL_NEW)
 
 logger.info(f"CORS allowed origins: {allowed_origins}")
 

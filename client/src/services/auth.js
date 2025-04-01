@@ -90,8 +90,18 @@ export const login = async (credentials) => {
     try {
         console.log('Login attempt with:', credentials);
 
+        // Make sure we're using the correct login endpoint
+        // If API_URL already includes /api, don't add it again
+        let loginUrl = API_URL;
+        if (!loginUrl.endsWith('/api')) {
+            loginUrl = `${loginUrl}/api`;
+        }
+        const fullLoginUrl = `${loginUrl}/auth/login`;
+
+        console.log('Login URL:', fullLoginUrl);
+
         // Use fetch directly instead of axios
-        const response = await fetch(`${API_URL}/auth/login`, {
+        const response = await fetch(fullLoginUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -99,9 +109,6 @@ export const login = async (credentials) => {
             credentials: 'include',
             body: JSON.stringify(credentials)
         });
-
-        // Log the full URL for debugging
-        console.log('Login URL:', `${API_URL}/auth/login`);
 
         if (!response.ok) {
             const errorData = await response.json();
