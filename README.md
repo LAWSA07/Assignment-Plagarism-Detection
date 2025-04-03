@@ -1,164 +1,180 @@
-# Assignment Management System
+# Assignment Plagiarism Detection System
 
-A web-based application for managing academic assignments, built with React and Flask.
+A full-stack application designed to help educators detect plagiarism in student assignments. The system offers an intuitive interface for professors to manage assignments and for students to submit their work, with built-in plagiarism detection capabilities.
+
+![Login Screen](docs/screenshots/login.png)
 
 ## Features
 
-- **User Authentication**: Separate login for students and professors
-- **Professor Dashboard**:
-  - Create and manage assignments
-  - Upload question files (PDF, DOC, DOCX)
-  - View student submissions
-- **Student Dashboard**:
-  - View available assignments
-  - Submit answers
-  - Track submission status and grades
-- **File Management**:
-  - Secure file upload/download
-  - Support for PDF, DOC, DOCX formats
-  - File size limit: 10MB
+- **User Authentication**: Separate portals for students and professors
+- **Assignment Management**: Create, update, and track assignments
+- **Submission Handling**: Students can upload files and track submission status
+- **Plagiarism Detection**: Advanced algorithm to detect similarities between submissions
+- **Grading System**: Evaluate and provide feedback on student work
+- **Modern UI**: Clean, responsive interface with intuitive navigation
 
-## Tech Stack
+## Technology Stack
 
-### Frontend
-- React.js
-- Modern UI/UX design
-- Responsive layout
+- **Frontend**: React.js with modern UI components
+- **Backend**: Flask (Python) RESTful API
+- **Database**: MongoDB for flexible document storage
+- **Authentication**: JWT-based secure authentication
+- **File Storage**: Local file system with cloud storage options
+- **Deployment**: Vercel (frontend) and Render (backend)
 
-### Backend
-- Flask (Python)
-- MongoDB with MongoEngine
-- GridFS for file storage
+## Screenshots
 
-## Setup
+### Student Dashboard
+![Student Dashboard](docs/screenshots/Screenshot%202025-04-01%20144815.png)
 
-1. Clone the repository:
-```bash
-git clone https://github.com/LAWSA07/gdg_project.git
-cd gdg_project
-```
+### Professor Dashboard
+![Professor Dashboard](docs/screenshots/Screenshot%202025-04-01%20144832.png)
 
-2. Install backend dependencies:
-```bash
-cd flask-server
-pip install -r requirements.txt
-```
+### Assignment Creation
+![Assignment Creation](docs/screenshots/Screenshot%202025-04-01%20144946.png)
 
-3. Install frontend dependencies:
-```bash
-cd client
-npm install
-```
+### Submission View
+![Submission View](docs/screenshots/Screenshot%202025-04-01%20145035.png)
 
-4. Start the backend server:
-```bash
-cd flask-server
-python app.py
-```
+### Plagiarism Report
+![Plagiarism Report](docs/screenshots/Screenshot%202025-04-01%20145101.png)
 
-5. Start the frontend development server:
-```bash
-cd client
-npm start
-```
+## Installation and Setup
 
-## Project Structure
+### Prerequisites
+- Node.js (v14+)
+- Python (v3.8+)
+- MongoDB
+- Git
 
-```
-gdg_project/
-├── client/                 # React frontend
-│   ├── src/
-│   │   ├── components/    # React components
-│   │   ├── styles/        # CSS files
-│   │   └── App.js         # Main App component
-│   └── package.json
-│
-└── flask-server/          # Flask backend
-    ├── models/            # Database models
-    ├── routes/            # API routes
-    ├── app.py            # Main Flask application
-    └── requirements.txt   # Python dependencies
-```
+### Backend Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-username/assignment-plagiarism-detection.git
+   cd assignment-plagiarism-detection
+   ```
+
+2. **Set up Python virtual environment**
+   ```bash
+   cd flask-server
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+3. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Set up environment variables**
+   Create a `.env` file in the `flask-server` directory:
+   ```
+   FLASK_ENV=development
+   SECRET_KEY=your-dev-secret-key
+   MONGODB_URI=mongodb://localhost:27017/assignment_checker
+   ```
+
+5. **Start the backend server**
+   ```bash
+   python app.py
+   ```
+   The server will run on http://localhost:5000
+
+### Frontend Setup
+
+1. **Navigate to the client directory**
+   ```bash
+   cd client
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+   Create a `.env` file in the `client` directory:
+   ```
+   REACT_APP_API_URL=http://localhost:5000/api
+   ```
+
+4. **Start the frontend development server**
+   ```bash
+   npm start
+   ```
+   The application will open in your browser at http://localhost:3000
+
+## Deployment Guide
+
+### Backend Deployment (Render)
+
+1. **Sign up for Render**
+   - Create an account at [render.com](https://render.com)
+   - Connect your GitHub repository
+
+2. **Create a new Web Service**
+   - Choose your repository
+   - Configure the service:
+     - **Build Command**: `pip install -r flask-server/requirements.txt`
+     - **Start Command**: `cd flask-server && gunicorn -c gunicorn.conf.py app:app`
+
+3. **Configure environment variables**
+   - `FLASK_ENV`: `production`
+   - `SECRET_KEY`: [secure random string]
+   - `MONGODB_URI`: [MongoDB connection string]
+   - `BACKEND_URL`: [your Render service URL]
+   - `FRONTEND_URLS`: [your Vercel frontend URL]
+
+### Frontend Deployment (Vercel)
+
+1. **Sign up for Vercel**
+   - Create an account at [vercel.com](https://vercel.com)
+   - Connect your GitHub repository
+
+2. **Import your project**
+   - Configure:
+     - **Framework**: Create React App
+     - **Root Directory**: client
+     - **Build Command**: npm run build
+     - **Output Directory**: build
+
+3. **Configure environment variables**
+   - `REACT_APP_API_URL`: [your Render backend URL]/api
+
+4. **Deploy**
+   - Click "Deploy" and wait for the build to complete
+
+## Usage Guide
+
+### For Professors
+
+1. **Register/Login** through the professor portal
+2. **Create assignments** with specific requirements
+3. **View submissions** from your students
+4. **Check plagiarism reports** to identify similarities
+5. **Grade submissions** and provide feedback
+
+### For Students
+
+1. **Register/Login** through the student portal
+2. **View assigned** coursework and deadlines
+3. **Submit assignments** before due dates
+4. **Check grades** and feedback from professors
 
 ## Contributing
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Deployment Instructions
+## Acknowledgments
 
-### Frontend (Vercel)
-
-1. Sign up for a [Vercel](https://vercel.com) account
-2. Install Vercel CLI:
-   ```bash
-   npm install -g vercel
-   ```
-3. Navigate to the client directory:
-   ```bash
-   cd client
-   ```
-4. Deploy to Vercel:
-   ```bash
-   vercel
-   ```
-5. Set environment variables in the Vercel dashboard:
-   - `REACT_APP_API_URL` - URL of your backend API (e.g., https://your-api.render.com/api)
-
-### Backend (Render)
-
-1. Sign up for a [Render](https://render.com) account
-2. Create a new Web Service
-3. Connect your repository
-4. Configure the service:
-   - **Build Command**: `pip install -r flask-server/requirements.txt`
-   - **Start Command**: `cd flask-server && gunicorn -c gunicorn.conf.py app:app`
-   - **Environment Variables**:
-     - `FLASK_ENV` = production
-     - `SECRET_KEY` = [your-secure-secret-key]
-     - `MONGODB_URI` = [your-mongodb-connection-string]
-     - `ALLOWED_ORIGINS` = [your-frontend-domain]
-     - `FRONTEND_DOMAIN` = [your-frontend-domain]
-
-5. The backend is currently deployed at:
-   - [https://assignment-plagarism-detection.onrender.com](https://assignment-plagarism-detection.onrender.com)
-
-6. Note about version conflicts:
-   - If you encounter dependency conflicts during deployment, you might need to adjust your requirements.txt file.
-   - The current configuration requires Flask 2.2.0 or higher to be compatible with Flask-Session 0.5.0
-
-## Environment Variables
-
-### Frontend (.env)
-```
-REACT_APP_API_URL=http://localhost:5000/api
-```
-
-### Backend (.env)
-```
-FLASK_ENV=development
-SECRET_KEY=your-dev-secret-key
-MONGODB_URI=mongodb://localhost:27017/assignment_checker
-ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
-```
-
-## Additional Configuration
-
-1. Update the API domain in `client/vercel.json` to point to the Render URL: `https://assignment-plagarism-detection.onrender.com/api`
-2. Update the frontend domain in `flask-server/app.py` once you have your Vercel domain
-
-## Post-Deployment Verification
-
-After deploying both frontend and backend:
-
-1. Verify API connectivity
-2. Test authentication flow
-3. Test file uploads and downloads
-4. Check CORS configuration by monitoring network requests
+- Special thanks to all contributors who have helped build this system
+- Inspired by the need for better plagiarism detection in educational settings

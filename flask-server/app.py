@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, session
+from flask import Flask, request, jsonify, session, redirect
 from flask_cors import CORS
 from mongoengine import connect
 from mongoengine.connection import ConnectionFailure
@@ -26,33 +26,47 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.config.from_object(Config)
 
-# Environment variables
+# Environment detection
 IS_PRODUCTION = os.getenv('FLASK_ENV') == 'production'
-ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', 'http://localhost:3000,http://localhost:3001')
-allowed_origins = ALLOWED_ORIGINS.split(',')
+logger.info(f"Running in {'PRODUCTION' if IS_PRODUCTION else 'DEVELOPMENT'} mode")
 
-# Get deployment URLs from environment variables
-BACKEND_URL = os.getenv('BACKEND_URL')
-FRONTEND_URLS = os.getenv('FRONTEND_URLS', '').split(',') if os.getenv('FRONTEND_URLS') else []
+# CORS Configuration - works in both environments
+# Default localhost origins
+allowed_origins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:3001'
+]
 
-logger.info(f"Production status: {IS_PRODUCTION}")
+# Add production origins from environment variables
+PRODUCTION_ORIGINS = os.getenv('FRONTEND_URLS', '')
+if PRODUCTION_ORIGINS:
+    for origin in PRODUCTION_ORIGINS.split(','):
+        if origin.strip() and origin.strip() not in allowed_origins:
+            allowed_origins.append(origin.strip())
 
-# Always include backend URL in allowed origins if provided
+# Add self URL to allowed origins
+BACKEND_URL = os.getenv('BACKEND_URL', '')
 if BACKEND_URL and BACKEND_URL not in allowed_origins:
     allowed_origins.append(BACKEND_URL)
 
-# Add all frontend URLs to allowed origins
-for url in FRONTEND_URLS:
-    if url and url.strip() and url not in allowed_origins:
-        allowed_origins.append(url.strip())
+# Hardcode known production domains as fallback
+vercel_domains = [
+    'https://assignment-plagarism-detection-8mll.vercel.app',
+    'https://assignment-plagarism-detection-oun4.vercel.app'
+]
+for domain in vercel_domains:
+    if domain not in allowed_origins:
+        allowed_origins.append(domain)
 
 logger.info(f"CORS allowed origins: {allowed_origins}")
 
 # Session configuration
 app.config.update(
-    SESSION_COOKIE_SECURE=IS_PRODUCTION,  # Set Secure flag only in production
+    SESSION_COOKIE_SECURE=IS_PRODUCTION,
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE='None' if IS_PRODUCTION else 'Lax', # Use 'None' in production, 'Lax' in development
+    SESSION_COOKIE_SAMESITE='None' if IS_PRODUCTION else 'Lax',
     SESSION_COOKIE_NAME='assignment_checker_session',
     PERMANENT_SESSION_LIFETIME=timedelta(days=1),
     SESSION_TYPE='filesystem'
@@ -61,26 +75,48 @@ app.config.update(
 # Initialize Flask-Session
 Session(app)
 
-# Set secret key
-app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key')  # Change in production
+# Set secret key - use environment variable or generate a random one
+app.secret_key = os.getenv('SECRET_KEY', os.urandom(24).hex())
 
-# Enable CORS for all routes with specific configuration
+# Configure CORS - works in both dev and production
 CORS(app,
     resources={r"/*": {
         "origins": allowed_origins,
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
-        "supports_credentials": True
+        "supports_credentials": True,
+        "expose_headers": ["Set-Cookie", "Access-Control-Allow-Origin"]
     }})
+
+# Explicitly handle OPTIONS requests for all routes
+@app.route('/', defaults={'path': ''}, methods=['OPTIONS'])
+@app.route('/<path:path>', methods=['OPTIONS'])
+def options_handler(path):
+    response = app.make_default_options_response()
+
+    # Get origin from request
+    origin = request.headers.get('Origin')
+    if origin in allowed_origins:
+        response.headers.add('Access-Control-Allow-Origin', origin)
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+
+    return response
 
 # MongoDB connection with error handling
 try:
     mongodb_uri = os.getenv('MONGODB_URI')
     if not mongodb_uri:
-        raise ValueError("MONGODB_URI environment variable is not set")
+        # Fallback to localhost MongoDB in development
+        if not IS_PRODUCTION:
+            mongodb_uri = 'mongodb://localhost:27017/assignment_checker'
+            logger.warning(f"MONGODB_URI not set, using default: {mongodb_uri}")
+        else:
+            raise ValueError("MONGODB_URI environment variable is not set")
 
     connect(host=mongodb_uri)
-    logger.info("Successfully connected to MongoDB Atlas")
+    logger.info(f"Successfully connected to MongoDB at: {mongodb_uri.split('@')[-1] if '@' in mongodb_uri else mongodb_uri}")
 except Exception as e:
     logger.error(f"Failed to connect to MongoDB: {e}")
     raise
@@ -90,28 +126,70 @@ app.register_blueprint(assignments_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(users_bp)
 
+# Non-prefixed route handlers (to support both /api and non-/api routes)
+# Auth routes
+@app.route('/auth/login', methods=['POST', 'OPTIONS'])
+def auth_login_direct():
+    logger.info(f"Direct /auth/login route called from: {request.headers.get('Origin')}")
+    if request.method == 'OPTIONS':
+        return options_handler('auth/login')
+    return redirect('/api/auth/login', code=307)  # 307 preserves the method and body
+
+@app.route('/auth/register', methods=['POST', 'OPTIONS'])
+def auth_register_direct():
+    logger.info(f"Direct /auth/register route called from: {request.headers.get('Origin')}")
+    if request.method == 'OPTIONS':
+        return options_handler('auth/register')
+    return redirect('/api/auth/register', code=307)
+
+@app.route('/auth/logout', methods=['POST', 'OPTIONS'])
+def auth_logout_direct():
+    logger.info(f"Direct /auth/logout route called from: {request.headers.get('Origin')}")
+    if request.method == 'OPTIONS':
+        return options_handler('auth/logout')
+    return redirect('/api/auth/logout', code=307)
+
+@app.route('/auth/check-session', methods=['GET', 'OPTIONS'])
+def auth_check_session_direct():
+    logger.info(f"Direct /auth/check-session route called from: {request.headers.get('Origin')}")
+    if request.method == 'OPTIONS':
+        return options_handler('auth/check-session')
+    return redirect('/api/auth/check-session', code=307)
+
 @app.before_request
-def make_session_permanent():
-    session.permanent = True
-    # Print session data for debugging
+def log_request_info():
+    # Log every request for debugging
+    logger.info(f"Request: {request.method} {request.path}")
+    logger.info(f"Headers: Origin={request.headers.get('Origin')}, Content-Type={request.headers.get('Content-Type')}")
     logger.info(f"Session data: {dict(session)}")
 
+@app.after_request
+def add_cors_headers(response):
+    # Add CORS headers to every response
+    origin = request.headers.get('Origin')
+    if origin in allowed_origins:
+        response.headers.add('Access-Control-Allow-Origin', origin)
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
+
+    # For debugging - check response headers
+    logger.debug(f"Response headers: {dict(response.headers)}")
+    return response
+
+# Health check endpoints (accessible with or without /api prefix)
 @app.route('/health', methods=['GET'])
+@app.route('/api/health', methods=['GET'])
 def health_check():
     """Health check endpoint to verify server status"""
+    origin = request.headers.get('Origin', 'Unknown')
+    logger.info(f"Health check from origin: {origin}")
     return jsonify({
         'status': 'healthy',
-        'message': 'Server is running'
-    })
-
-@app.route('/api/health', methods=['GET'])
-def api_health_check():
-    """API health check endpoint for frontend to verify connection"""
-    return jsonify({
-        'status': 'healthy',
-        'message': 'API server is running'
+        'message': 'Server is running',
+        'environment': 'production' if IS_PRODUCTION else 'development'
     })
 
 if __name__ == '__main__':
     logger.info("Starting Flask server...")
-    app.run(debug=True, port=5000, host='0.0.0.0')
+    app.run(debug=not IS_PRODUCTION, port=5000, host='0.0.0.0')
