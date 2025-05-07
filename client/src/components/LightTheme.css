@@ -1,0 +1,115 @@
+body, html {
+  min-height: 100vh;
+  background: #FAF6F2;
+  font-family: 'Nunito', 'Inter', Arial, sans-serif;
+  color: #222;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Nunito', 'Inter', Arial, sans-serif;
+  color: #222;
+  font-weight: 800;
+  margin-top: 0;
+}
+
+.card, .theme-card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+  padding: 32px 28px;
+  margin-bottom: 32px;
+}
+
+.button, .theme-btn {
+  background: #FF914D;
+  color: #fff;
+  border: none;
+  border-radius: 24px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  padding: 14px 36px;
+  cursor: pointer;
+  transition: background 0.18s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  letter-spacing: 0.5px;
+}
+.button:hover, .theme-btn:hover {
+  background: #ff7a1a;
+}
+
+input, select, textarea {
+  border: 1.5px solid #e0e0e0;
+  border-radius: 14px;
+  padding: 12px 16px;
+  font-size: 1rem;
+  font-family: inherit;
+  background: #fff;
+  color: #222;
+  margin-bottom: 18px;
+  outline: none;
+  transition: border 0.15s;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: #FF914D;
+}
+
+.navbar, .theme-navbar {
+  background: #fff;
+  border-bottom: 1.5px solid #f0e9e0;
+  padding: 18px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 1.1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.theme-link, a {
+  color: #FF914D;
+  text-decoration: none;
+  font-weight: 700;
+  transition: color 0.15s;
+}
+.theme-link:hover, a:hover {
+  color: #ff7a1a;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  background: #f5ede6;
+}
+::-webkit-scrollbar-thumb {
+  background: #FF914D;
+  border-radius: 8px;
+}
+
+/* Utility classes */
+.theme-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.theme-spacer {
+  margin: 32px 0;
+}
+
+/* Error/empty state */
+.theme-empty-state {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+  padding: 48px 32px;
+  text-align: center;
+  color: #222;
+  margin: 48px auto;
+  max-width: 480px;
+}
+.theme-empty-icon {
+  font-size: 64px;
+  margin-bottom: 18px;
+  color: #FF914D;
+} 

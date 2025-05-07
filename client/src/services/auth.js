@@ -122,8 +122,19 @@ export const login = async (credentials) => {
   try {
     console.log('Login attempt with:', credentials);
 
-    // Use direct /auth endpoint which is handled by our backend redirects
-    const loginUrl = createEndpointUrl('auth/login');
+    // Ensure we're using the correct endpoint with /api prefix
+    // For local development, API_URL already includes /api
+    const baseUrl = getBaseDomain();
+
+    // Determine whether to use /api prefix based on environment
+    const useApiPrefix = !baseUrl.includes('/api') && !API_URL.includes('/api');
+    const loginEndpoint = useApiPrefix
+      ? '/api/auth/login'
+      : '/auth/login';
+
+    // Construct complete login URL
+    const loginUrl = `${baseUrl}${loginEndpoint}`;
+
     console.log('Login URL:', loginUrl);
 
     // Use fetch directly instead of axios
@@ -162,13 +173,98 @@ export const login = async (credentials) => {
 
 export const logout = async () => {
   try {
-    const response = await authApi.post('/auth/logout');
+    console.log('Logging out user');
+
+    // Use the same URL construction logic as the login function
+    const baseUrl = getBaseDomain();
+
+    // Try to logout with the API URL directly first
+    let logoutSuccess = false;
+    let errors = [];
+
+    // Attempt multiple URL patterns to maximize chances of successful logout
+    // Pattern 1: /api/auth/logout - matches how routes are registered in Flask
+    const logoutUrl1 = `${baseUrl}/api/auth/logout`;
+    console.log('Trying logout URL 1:', logoutUrl1);
+
+    try {
+      const response1 = await fetch(logoutUrl1, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      });
+
+      if (response1.ok) {
+        logoutSuccess = true;
+        console.log('Logout successful on server using URL pattern 1');
+      } else {
+        errors.push(`Pattern 1 failed: ${response1.status}`);
+      }
+    } catch (e) {
+      errors.push(`Pattern 1 error: ${e.message}`);
+    }
+
+    // Pattern 2: /auth/logout - direct access route in main app.py
+    if (!logoutSuccess) {
+      const logoutUrl2 = `${baseUrl}/auth/logout`;
+      console.log('Trying logout URL 2:', logoutUrl2);
+
+      try {
+        const response2 = await fetch(logoutUrl2, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
+        });
+
+        if (response2.ok) {
+          logoutSuccess = true;
+          console.log('Logout successful on server using URL pattern 2');
+        } else {
+          errors.push(`Pattern 2 failed: ${response2.status}`);
+        }
+      } catch (e) {
+        errors.push(`Pattern 2 error: ${e.message}`);
+      }
+    }
+
+    // Pattern 3: /api/logout - fallback route in main app.py
+    if (!logoutSuccess) {
+      const logoutUrl3 = `${baseUrl}/api/logout`;
+      console.log('Trying logout URL 3:', logoutUrl3);
+
+      try {
+        const response3 = await fetch(logoutUrl3, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
+        });
+
+        if (response3.ok) {
+          logoutSuccess = true;
+          console.log('Logout successful on server using URL pattern 3');
+        } else {
+          errors.push(`Pattern 3 failed: ${response3.status}`);
+        }
+      } catch (e) {
+        errors.push(`Pattern 3 error: ${e.message}`);
+      }
+    }
+
+    // Always clear local storage regardless of server response
     localStorage.removeItem('user');
+
+    if (!logoutSuccess) {
+      console.warn('Server logout failed with all patterns:', errors);
+      console.warn('But proceeding with local logout anyway');
+    }
+
+    // Always return success since we've cleared local storage
     return true;
   } catch (error) {
     console.error('Logout error:', error);
-    localStorage.removeItem('user'); // Always remove user even if request fails
-    throw new Error(error.response?.data?.error || error.message || 'Logout failed');
+    // Always remove user data locally even if server request fails
+    localStorage.removeItem('user');
+    return true; // Return success anyway since we've logged out locally
   }
 };
 

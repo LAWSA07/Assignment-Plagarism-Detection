@@ -30,14 +30,19 @@ app.config.from_object(Config)
 IS_PRODUCTION = os.getenv('FLASK_ENV') == 'production'
 logger.info(f"Running in {'PRODUCTION' if IS_PRODUCTION else 'DEVELOPMENT'} mode")
 
-# CORS Configuration - works in both environments
-# Default localhost origins
-allowed_origins = [
+# Add development origins without duplicates
+allowed_origins = []
+development_origins = [
     'http://localhost:3000',
     'http://localhost:3001',
     'http://127.0.0.1:3000',
     'http://127.0.0.1:3001'
 ]
+
+# Add each origin only if it's not already in the list
+for origin in development_origins:
+    if origin not in allowed_origins:
+        allowed_origins.append(origin)
 
 # Add production origins from environment variables
 PRODUCTION_ORIGINS = os.getenv('FRONTEND_URLS', '')
@@ -60,7 +65,7 @@ for domain in vercel_domains:
     if domain not in allowed_origins:
         allowed_origins.append(domain)
 
-logger.info(f"CORS allowed origins: {allowed_origins}")
+logger.info(f"CORS allowed origins (no duplicates): {allowed_origins}")
 
 # Session configuration
 app.config.update(
@@ -156,6 +161,18 @@ def auth_check_session_direct():
         return options_handler('auth/check-session')
     return redirect('/api/auth/check-session', code=307)
 
+@app.route('/api/logout', methods=['POST', 'OPTIONS'])
+def api_logout_direct():
+    logger.info(f"Direct /api/logout route called from: {request.headers.get('Origin')}")
+    if request.method == 'OPTIONS':
+        return options_handler('api/logout')
+    # Just clear the session directly without redirect
+    session.clear()
+    return jsonify({
+        'success': True,
+        'message': 'Logout successful'
+    })
+
 @app.before_request
 def log_request_info():
     # Log every request for debugging
@@ -165,9 +182,12 @@ def log_request_info():
 
 @app.after_request
 def add_cors_headers(response):
-    # Add CORS headers to every response
+    # Log request details for debugging
+    logger.info(f"Request: {request.method} {request.path}")
+
+    # Only add CORS headers if they aren't already present
     origin = request.headers.get('Origin')
-    if origin in allowed_origins:
+    if origin in allowed_origins and 'Access-Control-Allow-Origin' not in response.headers:
         response.headers.add('Access-Control-Allow-Origin', origin)
         response.headers.add('Access-Control-Allow-Credentials', 'true')
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')

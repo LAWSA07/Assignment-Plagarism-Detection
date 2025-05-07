@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import CreateAssignmentModal from './CreateAssignmentModal';
 import PlagiarismReportModal from './PlagiarismReportModal';
 import './Dashboard.css';
+import './DashboardTheme.css';
+import '../LightTheme.css';
 
 const ProfessorDashboard = () => {
     const navigate = useNavigate();
@@ -206,92 +208,78 @@ const ProfessorDashboard = () => {
     };
 
     return (
-        <div className="dashboard-container">
-            <div className="dashboard-header">
-                <h1>Professor Dashboard</h1>
-                <button className="logout-btn" onClick={handleLogout}>
-                    Logout
-                </button>
-            </div>
-
-            <div className="stats-container">
-                <div className="stat-card">
-                    <h3>Total Assignments</h3>
-                    <p className="stat-number">{stats.totalAssignments}</p>
-                    <p className="stat-label">Created</p>
+        <div className="theme-center" style={{ minHeight: '100vh', background: '#FAF6F2' }}>
+            <div className="theme-card" style={{ maxWidth: 1200, width: '100%' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
+                    <h1 style={{ fontWeight: 800, fontSize: '2.2rem', color: '#222' }}>Professor Dashboard</h1>
+                    <button className="theme-btn" onClick={handleLogout}>Logout</button>
                 </div>
-
-                <div className="stat-card">
-                    <h3>Active Assignments</h3>
-                    <p className="stat-number">{stats.activeAssignments}</p>
-                    <p className="stat-label">In progress</p>
+                <div style={{ display: 'flex', gap: 16, marginBottom: 32 }}>
+                    <button onClick={() => navigate('/student/dashboard')} className="theme-btn" style={{ background: '#fff', color: '#FF914D', border: '2px solid #FF914D' }}>Student Portal</button>
+                    <button onClick={() => navigate('/professor/dashboard')} className="theme-btn" style={{ background: '#FF914D', color: '#fff' }}>Professor Portal</button>
                 </div>
-
-                <div className="stat-card">
-                    <h3>Total Submissions</h3>
-                    <p className="stat-number">{stats.totalSubmissions}</p>
-                    <p className="stat-label">Received</p>
-                </div>
-
-                <div className="stat-card">
-                    <h3>High Similarity</h3>
-                    <p className="stat-number" style={{ color: stats.highPlagiarismCount > 0 ? '#dc3545' : '#28a745' }}>
-                        {stats.highPlagiarismCount}
-                    </p>
-                    <p className="stat-label">Submissions needing review</p>
-                </div>
-            </div>
-
-            <div className="content-section">
-                <div className="section-header">
-                    <h2>Assignments & Submissions</h2>
-                    <button className="create-btn" onClick={() => setIsModalOpen(true)}>
-                        Create Assignment
-                    </button>
-                </div>
-
-                {isLoading ? (
-                    <div className="loading">Loading assignments...</div>
-                ) : assignments.length === 0 ? (
-                    <div className="no-assignments">
-                        No assignments created yet. Click the "Create Assignment" button to get started.
+                <div style={{ display: 'flex', gap: 32, marginBottom: 32 }}>
+                    <div className="card" style={{ flex: 1 }}>
+                        <div style={{ color: '#888', fontWeight: 700 }}>Total Assignments</div>
+                        <div style={{ fontWeight: 900, fontSize: '2rem', color: '#FF914D' }}>{stats.totalAssignments}</div>
                     </div>
-                ) : (
-                    <div className="assignments-list">
-                        {assignments.map((assignment) => (
-                            <div key={assignment.id} className="assignment-card">
-                                <div className="assignment-header">
-                                    <h3>{assignment.name}</h3>
-                                    <span className="course-tag">{assignment.course}</span>
-                                </div>
-                                <div className="assignment-details">
-                                    <p><strong>Due Date:</strong> {new Date(assignment.due_date).toLocaleString()}</p>
-                                    <p><strong>Status:</strong> {assignment.status}</p>
-                                </div>
-                                <div className="submissions-section">
-                                    <h4>Submissions</h4>
-                                    {renderSubmissionsTable(assignment.id)}
-                                </div>
-                            </div>
-                        ))}
+                    <div className="card" style={{ flex: 1 }}>
+                        <div style={{ color: '#888', fontWeight: 700 }}>Active Assignments</div>
+                        <div style={{ fontWeight: 900, fontSize: '2rem', color: '#FF914D' }}>{stats.activeAssignments}</div>
                     </div>
-                )}
+                    <div className="card" style={{ flex: 1 }}>
+                        <div style={{ color: '#888', fontWeight: 700 }}>Total Submissions</div>
+                        <div style={{ fontWeight: 900, fontSize: '2rem', color: '#FF914D' }}>{stats.totalSubmissions}</div>
+                    </div>
+                    <div className="card" style={{ flex: 1 }}>
+                        <div style={{ color: '#888', fontWeight: 700 }}>High Similarity</div>
+                        <div style={{ fontWeight: 900, fontSize: '2rem', color: stats.highPlagiarismCount > 0 ? '#dc3545' : '#FF914D' }}>{stats.highPlagiarismCount}</div>
+                    </div>
+                </div>
+                <div style={{ marginBottom: 32 }}>
+                    <div style={{ fontWeight: 800, fontSize: '1.3rem', color: '#222', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span>Assignments & Submissions</span>
+                        <button className="theme-btn" onClick={() => setIsModalOpen(true)}>Create Assignment</button>
+                    </div>
+                    {isLoading ? (
+                        <div style={{ color: '#888', fontWeight: 700 }}>Loading assignments...</div>
+                    ) : assignments.length === 0 ? (
+                        <div style={{ color: '#888', fontWeight: 700 }}>No assignments created yet. Click the "Create Assignment" button to get started.</div>
+                    ) : (
+                        <div style={{ width: '100%' }}>
+                            {assignments.map((assignment) => (
+                                <div key={assignment.id} className="card" style={{ marginBottom: 24, borderRadius: 18, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1.5px solid #f0e9e0', paddingBottom: 8, marginBottom: 12 }}>
+                                        <h3 style={{ color: '#222', fontWeight: 800, fontSize: '1.2rem', margin: 0 }}>{assignment.name}</h3>
+                                        <span style={{ background: '#FF914D', color: '#fff', fontWeight: 700, padding: '6px 18px', borderRadius: 12, fontSize: '1rem' }}>{assignment.course}</span>
+                                    </div>
+                                    <div style={{ marginBottom: 12 }}>
+                                        <p style={{ color: '#444', fontWeight: 700, margin: 0 }}><strong>Due Date:</strong> {new Date(assignment.due_date).toLocaleString()}</p>
+                                        <p style={{ color: '#444', fontWeight: 700, margin: 0 }}><strong>Status:</strong> {assignment.status}</p>
+                                    </div>
+                                    <div style={{ marginTop: 18 }}>
+                                        <h4 style={{ color: '#222', fontWeight: 800, fontSize: '1.1rem', marginBottom: 8 }}>Submissions</h4>
+                                        {renderSubmissionsTable(assignment.id)}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+                <CreateAssignmentModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    onAssignmentCreated={handleAssignmentCreated}
+                />
+                <PlagiarismReportModal
+                    isOpen={isPlagiarismModalOpen}
+                    onClose={() => {
+                        setIsPlagiarismModalOpen(false);
+                        setSelectedSubmission(null);
+                    }}
+                    submission={selectedSubmission}
+                />
             </div>
-
-            <CreateAssignmentModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onAssignmentCreated={handleAssignmentCreated}
-            />
-
-            <PlagiarismReportModal
-                isOpen={isPlagiarismModalOpen}
-                onClose={() => {
-                    setIsPlagiarismModalOpen(false);
-                    setSelectedSubmission(null);
-                }}
-                submission={selectedSubmission}
-            />
         </div>
     );
 };

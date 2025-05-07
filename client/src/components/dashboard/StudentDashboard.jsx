@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SubmitAssignmentModal from './SubmitAssignmentModal';
 import './Dashboard.css';
+import './DashboardTheme.css';
+import '../LightTheme.css';
 
 const StudentDashboard = () => {
     const navigate = useNavigate();
@@ -231,111 +233,41 @@ const StudentDashboard = () => {
     }
 
     return (
-        <div className="dashboard-container" style={{ color: '#333' }}>
-            <div className="dashboard-header" style={{ background: '#f5f5f5', padding: '20px', borderBottom: '1px solid #ddd' }}>
-                <h1 style={{ color: '#2c3e50', margin: 0 }}>Student Dashboard</h1>
-                <button className="logout-btn" style={{
-                    backgroundColor: '#e74c3c',
-                    color: 'white',
-                    border: 'none',
-                    padding: '10px 20px',
-                    borderRadius: '5px',
-                    cursor: 'pointer'
-                }} onClick={handleLogout}>
-                    Logout
-                </button>
-            </div>
-
-            <div className="stats-container" style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: '20px',
-                padding: '20px'
-            }}>
-                <div className="stat-card" style={{
-                    background: 'white',
-                    padding: '20px',
-                    borderRadius: '8px',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                    textAlign: 'center'
-                }}>
-                    <h3 style={{ color: '#2c3e50', marginBottom: '10px' }}>Pending Assignments</h3>
-                    <p className="stat-number" style={{ fontSize: '24px', fontWeight: 'bold', color: '#e74c3c' }}>
-                        {stats.pendingAssignments}
-                    </p>
-                    <p className="stat-label" style={{ color: '#7f8c8d' }}>Due this week</p>
+        <div className="theme-center" style={{ minHeight: '100vh', background: '#FAF6F2' }}>
+            <div className="theme-card" style={{ maxWidth: 1200, width: '100%' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
+                    <h1 style={{ fontWeight: 800, fontSize: '2.2rem', color: '#222' }}>Student Dashboard</h1>
+                    <button className="theme-btn" onClick={handleLogout}>Logout</button>
                 </div>
-
-                <div className="stat-card" style={{
-                    background: 'white',
-                    padding: '20px',
-                    borderRadius: '8px',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                    textAlign: 'center'
-                }}>
-                    <h3 style={{ color: '#2c3e50', marginBottom: '10px' }}>Completed Assignments</h3>
-                    <p className="stat-number" style={{ fontSize: '24px', fontWeight: 'bold', color: '#e74c3c' }}>
-                        {stats.completedAssignments}
-                    </p>
-                    <p className="stat-label" style={{ color: '#7f8c8d' }}>This semester</p>
+                <div style={{ display: 'flex', gap: 16, marginBottom: 32 }}>
+                    <button onClick={() => navigate('/student/dashboard')} className="theme-btn" style={{ background: '#FF914D', color: '#fff' }}>Student Portal</button>
+                    <button onClick={() => navigate('/professor/dashboard')} className="theme-btn" style={{ background: '#fff', color: '#FF914D', border: '2px solid #FF914D' }}>Professor Portal</button>
                 </div>
-
-                <div className="stat-card" style={{
-                    background: 'white',
-                    padding: '20px',
-                    borderRadius: '8px',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                    textAlign: 'center'
-                }}>
-                    <h3 style={{ color: '#2c3e50', marginBottom: '10px' }}>Average Score</h3>
-                    <p className="stat-number" style={{ fontSize: '24px', fontWeight: 'bold', color: '#e74c3c' }}>
-                        {stats.averageScore}
-                    </p>
-                    <p className="stat-label" style={{ color: '#7f8c8d' }}>All assignments</p>
+                <div style={{ display: 'flex', gap: 32, marginBottom: 32 }}>
+                    <div className="card" style={{ flex: 1 }}>
+                        <div style={{ color: '#888', fontWeight: 700 }}>Pending Assignments</div>
+                        <div style={{ fontWeight: 900, fontSize: '2rem', color: '#FF914D' }}>{stats.pendingAssignments}</div>
+                    </div>
+                    <div className="card" style={{ flex: 1 }}>
+                        <div style={{ color: '#888', fontWeight: 700 }}>Completed Assignments</div>
+                        <div style={{ fontWeight: 900, fontSize: '2rem', color: '#FF914D' }}>{stats.completedAssignments}</div>
+                    </div>
+                    <div className="card" style={{ flex: 1 }}>
+                        <div style={{ color: '#888', fontWeight: 700 }}>Average Score</div>
+                        <div style={{ fontWeight: 900, fontSize: '2rem', color: '#FF914D' }}>{stats.averageScore}</div>
+                    </div>
                 </div>
-            </div>
-
-            <div className="dashboard-tabs">
-                <button
-                    className={`tab ${activeTab === 'assignments' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('assignments')}
-                >
-                    Assignments
-                </button>
-                <button
-                    className={`tab ${activeTab === 'submit' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('submit')}
-                >
-                    Submit
-                </button>
-                <button
-                    className={`tab ${activeTab === 'feedback' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('feedback')}
-                >
-                    Feedback
-                </button>
-            </div>
-
-            <div className="content-section">
-                <div className="section-header">
-                    <h2>My Assignments</h2>
-                    <div className="filters">
-                        <select
-                            className="filter-select"
-                            value={filters.status}
-                            onChange={(e) => handleFilterChange('status', e.target.value)}
-                        >
+                <div style={{ marginBottom: 32 }}>
+                    <div style={{ fontWeight: 800, fontSize: '1.3rem', color: '#222', marginBottom: 16 }}>My Assignments</div>
+                    <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+                        <select className="theme-input" value={filters.status} onChange={e => handleFilterChange('status', e.target.value)}>
                             <option>All Statuses</option>
                             <option>Not Started</option>
                             <option>In Progress</option>
                             <option>Submitted</option>
                             <option>Graded</option>
                         </select>
-                        <select
-                            className="filter-select"
-                            value={filters.course}
-                            onChange={(e) => handleFilterChange('course', e.target.value)}
-                        >
+                        <select className="theme-input" value={filters.course} onChange={e => handleFilterChange('course', e.target.value)}>
                             <option>All Courses</option>
                             <option>CS101</option>
                             <option>CS201</option>
@@ -343,133 +275,63 @@ const StudentDashboard = () => {
                             <option>CS401</option>
                         </select>
                     </div>
-                </div>
-
-                {isLoading ? (
-                    <div className="loading">
-                        <div className="loading-spinner"></div>
-                        <p>Loading assignments...</p>
-                    </div>
-                ) : filteredAssignments.length === 0 ? (
-                    <div className="no-assignments">
-                        {assignments.length === 0
-                            ? 'No assignments available at the moment.'
-                            : 'No assignments match the selected filters.'}
-                    </div>
-                ) : (
-                    <div className="assignments-table" style={{ margin: '20px', backgroundColor: 'white', borderRadius: '8px', overflow: 'hidden' }}>
-                        <div className="table-header" style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(6, 1fr)',
-                            padding: '15px',
-                            backgroundColor: '#34495e',
-                            color: 'white',
-                            fontWeight: 'bold'
-                        }}>
-                            <div className="col">Assignment</div>
-                            <div className="col">Course</div>
-                            <div className="col">Due Date</div>
-                            <div className="col">Status</div>
-                            <div className="col">Progress</div>
-                            <div className="col">Actions</div>
+                    {isLoading ? (
+                        <div style={{ color: '#888', fontWeight: 700 }}>Loading assignments...</div>
+                    ) : filteredAssignments.length === 0 ? (
+                        <div style={{ color: '#888', fontWeight: 700 }}>
+                            {assignments.length === 0 ? 'No assignments available at the moment.' : 'No assignments match the selected filters.'}
                         </div>
-
-                        {filteredAssignments.map((assignment) => (
-                            <div key={assignment._id} className="table-row" style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(6, 1fr)',
-                                padding: '15px',
-                                borderBottom: '1px solid #eee',
-                                alignItems: 'center',
-                                color: '#2c3e50'
-                            }}>
-                                <div className="col" style={{ fontWeight: '500' }}>{assignment.name}</div>
-                                <div className="col">{assignment.course}</div>
-                                <div className="col">
-                                    <div className="due-date" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                                        <span>{new Date(assignment.due_date).toLocaleDateString()}</span>
-                                        {assignment.days_left && (
-                                            <span className={`days-left ${assignment.days_left < 3 ? 'urgent' : ''}`} style={{
-                                                color: assignment.days_left < 3 ? '#e74c3c' : '#2ecc71',
-                                                fontSize: '0.9em'
-                                            }}>
-                                                {assignment.days_left} days left
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="col">
-                                    <span className={`status ${assignment.status?.toLowerCase() || 'not-started'}`} style={{
-                                        padding: '5px 10px',
-                                        borderRadius: '15px',
-                                        fontSize: '0.9em',
-                                        backgroundColor: assignment.status === 'Submitted' ? '#2ecc71' :
-                                                       assignment.status === 'In Progress' ? '#f1c40f' : '#95a5a6',
-                                        color: 'white'
-                                    }}>
-                                        {assignment.status || 'Not Started'}
-                                    </span>
-                                </div>
-                                <div className="col">
-                                    <div className="progress-bar" style={{
-                                        width: '100%',
-                                        height: '8px',
-                                        backgroundColor: '#ecf0f1',
-                                        borderRadius: '4px',
-                                        overflow: 'hidden'
-                                    }}>
-                                        <div className="progress-fill" style={{
-                                            width: `${assignment.progress || 0}%`,
-                                            height: '100%',
-                                            backgroundColor: '#3498db',
-                                            transition: 'width 0.3s ease'
-                                        }}/>
-                                    </div>
-                                    <span className="progress-text" style={{ fontSize: '0.9em', color: '#7f8c8d', marginTop: '5px' }}>
-                                        {assignment.progress || 0}%
-                                    </span>
-                                </div>
-                                <div className="col actions" style={{ display: 'flex', gap: '10px' }}>
-                                    <button className="action-btn secondary" style={{
-                                        padding: '8px 15px',
-                                        borderRadius: '5px',
-                                        border: '1px solid #3498db',
-                                        backgroundColor: 'white',
-                                        color: '#3498db',
-                                        cursor: 'pointer'
-                                    }} onClick={() => handleDownload(assignment)}>
-                                        Download
-                                    </button>
-                                    <button className="action-btn primary" style={{
-                                        padding: '8px 15px',
-                                        borderRadius: '5px',
-                                        border: 'none',
-                                        backgroundColor: '#3498db',
-                                        color: 'white',
-                                        cursor: 'pointer'
-                                    }} onClick={() => handleSubmit(assignment)}
-                                        disabled={assignment.status === 'Submitted' || assignment.status === 'Graded'}>
-                                        {assignment.status === 'Submitted' ? 'Submitted' :
-                                         assignment.status === 'Graded' ? 'Graded' : 'Submit'}
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                    ) : (
+                        <table style={{ width: '100%', background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', borderCollapse: 'collapse', marginTop: 12 }}>
+                            <thead>
+                                <tr style={{ background: '#FAF6F2', color: '#888', fontWeight: 700 }}>
+                                    <th style={{ padding: 12, borderBottom: '1.5px solid #f0e9e0' }}>Assignment</th>
+                                    <th style={{ padding: 12, borderBottom: '1.5px solid #f0e9e0' }}>Course</th>
+                                    <th style={{ padding: 12, borderBottom: '1.5px solid #f0e9e0' }}>Due Date</th>
+                                    <th style={{ padding: 12, borderBottom: '1.5px solid #f0e9e0' }}>Status</th>
+                                    <th style={{ padding: 12, borderBottom: '1.5px solid #f0e9e0' }}>Progress</th>
+                                    <th style={{ padding: 12, borderBottom: '1.5px solid #f0e9e0' }}>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredAssignments.map((assignment) => (
+                                    <tr key={assignment._id} style={{ borderBottom: '1px solid #f0e9e0' }}>
+                                        <td style={{ padding: 12 }}>{assignment.name}</td>
+                                        <td style={{ padding: 12 }}>{assignment.course}</td>
+                                        <td style={{ padding: 12 }}>{new Date(assignment.due_date).toLocaleDateString()}</td>
+                                        <td style={{ padding: 12 }}>
+                                            <span style={{ padding: '5px 10px', borderRadius: 12, fontSize: '0.95em', background: '#FF914D', color: '#fff', fontWeight: 700 }}>{assignment.status || 'Not Started'}</span>
+                                        </td>
+                                        <td style={{ padding: 12 }}>
+                                            <div style={{ width: '100%', height: '8px', background: '#f0e9e0', borderRadius: 8, overflow: 'hidden' }}>
+                                                <div style={{ width: `${assignment.progress || 0}%`, height: '100%', background: '#FF914D', transition: 'width 0.3s' }} />
+                                            </div>
+                                            <span style={{ fontSize: '0.95em', color: '#888', marginTop: '5px', fontWeight: 700 }}>{assignment.progress || 0}%</span>
+                                        </td>
+                                        <td style={{ padding: 12, display: 'flex', gap: '10px' }}>
+                                            <button className="theme-btn" onClick={() => handleDownload(assignment)} style={{ padding: '8px 18px', fontSize: '1rem' }}>Download</button>
+                                            <button className="theme-btn" onClick={() => handleSubmit(assignment)} style={{ padding: '8px 18px', fontSize: '1rem' }} disabled={assignment.status === 'Submitted' || assignment.status === 'Graded'}>
+                                                {assignment.status === 'Submitted' ? 'Submitted' : assignment.status === 'Graded' ? 'Graded' : 'Submit'}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+                {selectedAssignment && (
+                    <SubmitAssignmentModal
+                        isOpen={isSubmitModalOpen}
+                        onClose={() => {
+                            setIsSubmitModalOpen(false);
+                            setSelectedAssignment(null);
+                        }}
+                        assignment={selectedAssignment}
+                        onSubmissionComplete={handleSubmissionComplete}
+                    />
                 )}
             </div>
-
-            {selectedAssignment && (
-                <SubmitAssignmentModal
-                    isOpen={isSubmitModalOpen}
-                    onClose={() => {
-                        setIsSubmitModalOpen(false);
-                        setSelectedAssignment(null);
-                    }}
-                    assignment={selectedAssignment}
-                    onSubmissionComplete={handleSubmissionComplete}
-                />
-            )}
         </div>
     );
 };

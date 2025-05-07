@@ -132,8 +132,10 @@ def check_session():
         logger.error(f"Session check error: {str(e)}")
         return jsonify({'error': 'Session check failed'}), 500
 
+@auth_bp.route('/auth/logout', methods=['POST'])
 @auth_bp.route('/api/auth/logout', methods=['POST'])
 def logout():
+    logger.info(f"Auth blueprint logout route called from: {request.headers.get('Origin')}")
     session.clear()
     return jsonify({
         'success': True,

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login, register } from '../../services/auth';
 import './Auth.css';
+import './LoginTheme.css';
+import '../LightTheme.css';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -135,45 +137,24 @@ const Login = () => {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <h2>{isStudent ? 'Student Portal' : 'Professor Portal'}</h2>
-        <p className="subtitle">Enter your credentials to access the system</p>
-
-        <div className="auth-tabs">
-          <button
-            className={`tab ${isLogin ? 'active' : ''}`}
-            onClick={() => {
-              setIsLogin(true);
-              setError('');
-            }}
-            type="button"
-          >
-            Login
-          </button>
-          <button
-            className={`tab ${!isLogin ? 'active' : ''}`}
-            onClick={() => {
-              setIsLogin(false);
-              setError('');
-            }}
-            type="button"
-          >
-            Register
-          </button>
+    <div className="theme-center" style={{ minHeight: '100vh', background: '#FAF6F2' }}>
+      <div className="theme-card" style={{ maxWidth: 420, width: '100%', textAlign: 'center' }}>
+        <h2 style={{ fontWeight: 800, fontSize: '2rem', color: '#222', marginBottom: 8 }}>{isStudent ? 'Student Portal' : 'Professor Portal'}</h2>
+        <p style={{ color: '#444', fontSize: '1.1rem', marginBottom: 24 }}>Enter your credentials to access the system</p>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 24 }}>
+          <button className="theme-btn" style={{ background: isStudent ? '#FF914D' : '#fff', color: isStudent ? '#fff' : '#FF914D', border: isStudent ? 'none' : '2px solid #FF914D' }} onClick={() => setIsStudent(true)}>Student</button>
+          <button className="theme-btn" style={{ background: !isStudent ? '#FF914D' : '#fff', color: !isStudent ? '#fff' : '#FF914D', border: !isStudent ? 'none' : '2px solid #FF914D' }} onClick={() => setIsStudent(false)}>Professor</button>
         </div>
-
-        {error && <div className="error-message">{error}</div>}
-
-        <form onSubmit={handleSubmit} className="auth-form">
+        <form className="theme-center" style={{ width: '100%' }} onSubmit={handleSubmit}>
           {!isLogin && (
             <>
-              <div className="form-group">
-                <label htmlFor="firstName">First Name</label>
+              <div className="login-theme-group">
+                <label htmlFor="firstName" className="login-theme-label">First Name</label>
                 <input
                   type="text"
                   id="firstName"
                   name="firstName"
+                  className="login-theme-input"
                   value={formData.firstName}
                   onChange={handleChange}
                   disabled={isLoading}
@@ -181,12 +162,13 @@ const Login = () => {
                 />
               </div>
 
-              <div className="form-group">
-                <label htmlFor="lastName">Last Name</label>
+              <div className="login-theme-group">
+                <label htmlFor="lastName" className="login-theme-label">Last Name</label>
                 <input
                   type="text"
                   id="lastName"
                   name="lastName"
+                  className="login-theme-input"
                   value={formData.lastName}
                   onChange={handleChange}
                   disabled={isLoading}
@@ -196,12 +178,13 @@ const Login = () => {
             </>
           )}
 
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
+          <div className="login-theme-group">
+            <label htmlFor="email" className="login-theme-label">Email</label>
             <input
               type="email"
               id="email"
               name="email"
+              className="login-theme-input"
               value={formData.email}
               onChange={handleChange}
               disabled={isLoading}
@@ -209,12 +192,13 @@ const Login = () => {
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
+          <div className="login-theme-group">
+            <label htmlFor="password" className="login-theme-label">Password</label>
             <input
               type="password"
               id="password"
               name="password"
+              className="login-theme-input"
               value={formData.password}
               onChange={handleChange}
               disabled={isLoading}
@@ -224,12 +208,13 @@ const Login = () => {
 
           {!isLogin && (
             <>
-              <div className="form-group">
-                <label htmlFor="confirmPassword">Confirm Password</label>
+              <div className="login-theme-group">
+                <label htmlFor="confirmPassword" className="login-theme-label">Confirm Password</label>
                 <input
                   type="password"
                   id="confirmPassword"
                   name="confirmPassword"
+                  className="login-theme-input"
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   disabled={isLoading}
@@ -238,12 +223,13 @@ const Login = () => {
               </div>
 
               {isStudent && (
-                <div className="form-group">
-                  <label htmlFor="section">Section</label>
+                <div className="login-theme-group">
+                  <label htmlFor="section" className="login-theme-label">Section</label>
                   <input
                     type="text"
                     id="section"
                     name="section"
+                    className="login-theme-input"
                     value={formData.section}
                     onChange={handleChange}
                     disabled={isLoading}
@@ -256,23 +242,18 @@ const Login = () => {
 
           <button
             type="submit"
-            className="submit-btn"
+            className="theme-btn"
             disabled={isLoading}
           >
             {isLoading ? 'Please wait...' : isLogin ? 'Login' : 'Register'}
           </button>
         </form>
 
-        <button
-          className="switch-portal-btn"
-          onClick={() => {
-            setIsStudent(!isStudent);
-            setError('');
-          }}
-          type="button"
-        >
-          Switch to {isStudent ? 'Professor' : 'Student'} Portal
-        </button>
+        <div style={{ marginTop: 24, color: '#444', fontSize: '1rem' }}>
+          Don&apos;t have an account?{' '}
+          <a href="/register" className="theme-link">Register</a>
+        </div>
+        {error && <div style={{ color: '#dc3545', marginTop: 16 }}>{error}</div>}
       </div>
     </div>
   );

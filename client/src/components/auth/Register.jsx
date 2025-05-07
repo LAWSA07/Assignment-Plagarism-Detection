@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import './Auth.css';
+import './LoginTheme.css';
+import '../LightTheme.css';
 
 const Register = () => {
   const [isStudent, setIsStudent] = useState(true);
@@ -7,8 +9,13 @@ const Register = () => {
     fullName: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    firstName: '',
+    lastName: '',
+    section: ''
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     setFormData({
@@ -23,84 +30,30 @@ const Register = () => {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <h2>{isStudent ? 'Student Portal' : 'Professor Portal'}</h2>
-        <p className="subtitle">Enter your credentials to access the system</p>
-
-        <div className="auth-tabs">
-          <button
-            className={`tab ${!isStudent ? 'active' : ''}`}
-            onClick={() => setIsStudent(false)}
-          >
-            Login
-          </button>
-          <button
-            className={`tab ${isStudent ? 'active' : ''}`}
-            onClick={() => setIsStudent(true)}
-          >
-            Register
-          </button>
+    <div className="theme-center" style={{ minHeight: '100vh', background: '#FAF6F2' }}>
+      <div className="theme-card" style={{ maxWidth: 420, width: '100%', textAlign: 'center' }}>
+        <h2 style={{ fontWeight: 800, fontSize: '2rem', color: '#222', marginBottom: 8 }}>{isStudent ? 'Student Registration' : 'Professor Registration'}</h2>
+        <p style={{ color: '#444', fontSize: '1.1rem', marginBottom: 24 }}>Create your account to get started</p>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 24 }}>
+          <button className="theme-btn" style={{ background: isStudent ? '#FF914D' : '#fff', color: isStudent ? '#fff' : '#FF914D', border: isStudent ? 'none' : '2px solid #FF914D' }} onClick={() => setIsStudent(true)}>Student</button>
+          <button className="theme-btn" style={{ background: !isStudent ? '#FF914D' : '#fff', color: !isStudent ? '#fff' : '#FF914D', border: !isStudent ? 'none' : '2px solid #FF914D' }} onClick={() => setIsStudent(false)}>Professor</button>
         </div>
-
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-group">
-            <label>Full Name</label>
-            <input
-              type="text"
-              name="fullName"
-              placeholder="John Doe"
-              value={formData.fullName}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              name="email"
-              placeholder="name@example.com"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Confirm Password</label>
-            <input
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <button type="submit" className="submit-btn">
-            Register
-          </button>
+        <form className="theme-center" style={{ width: '100%' }} onSubmit={handleSubmit}>
+          <input className="theme-input" type="text" name="firstName" placeholder="First Name" value={formData.firstName} onChange={handleChange} required />
+          <input className="theme-input" type="text" name="lastName" placeholder="Last Name" value={formData.lastName} onChange={handleChange} required />
+          <input className="theme-input" type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange} required />
+          <input className="theme-input" type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} required />
+          <input className="theme-input" type="password" name="confirmPassword" placeholder="Confirm Password" value={formData.confirmPassword} onChange={handleChange} required />
+          {isStudent && (
+            <input className="theme-input" type="text" name="section" placeholder="Section" value={formData.section} onChange={handleChange} required />
+          )}
+          <button className="theme-btn" type="submit" style={{ width: '100%', marginTop: 12 }}>{isLoading ? 'Please wait...' : 'Register'}</button>
         </form>
-
-        <button
-          className="switch-portal"
-          onClick={() => setIsStudent(!isStudent)}
-        >
-          Switch to {isStudent ? 'Professor' : 'Student'} Registration
-        </button>
+        <div style={{ marginTop: 24, color: '#444', fontSize: '1rem' }}>
+          Already have an account?{' '}
+          <a href="/login" className="theme-link">Login</a>
+        </div>
+        {error && <div style={{ color: '#dc3545', marginTop: 16 }}>{error}</div>}
       </div>
     </div>
   );

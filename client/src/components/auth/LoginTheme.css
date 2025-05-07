@@ -1,0 +1,168 @@
+.login-theme-bg, .register-theme-bg {
+  min-height: 100vh;
+  width: 100vw;
+  background: #e1063c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Montserrat', 'Bebas Neue', Arial, sans-serif;
+}
+
+.login-theme-card, .register-theme-card {
+  background: #e1063c;
+  border: 4px solid #111;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 48px 40px 40px 40px;
+  max-width: 420px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.login-theme-title, .register-theme-title {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.login-theme-subtitle, .register-theme-subtitle {
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 32px;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.login-theme-tabs, .register-theme-tabs {
+  display: flex;
+  width: 100%;
+  margin-bottom: 32px;
+  border-bottom: 4px solid #111;
+}
+.login-theme-tab, .register-theme-tab {
+  flex: 1;
+  padding: 18px 0;
+  background: #e1063c;
+  color: #fff;
+  border: none;
+  border-right: 4px solid #111;
+  font-size: 1.1rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.15s, color 0.15s;
+}
+.login-theme-tab:last-child, .register-theme-tab:last-child {
+  border-right: none;
+}
+.login-theme-tab.active, .register-theme-tab.active {
+  background: #fff;
+  color: #111;
+}
+
+.login-theme-form, .register-theme-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.login-theme-group, .register-theme-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.login-theme-label, .register-theme-label {
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.login-theme-input, .register-theme-input {
+  padding: 14px 16px;
+  background: #fff;
+  color: #111;
+  border: 3px solid #111;
+  border-radius: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  outline: none;
+  transition: border 0.15s;
+}
+.login-theme-input:focus, .register-theme-input:focus {
+  border-color: #e1063c;
+}
+
+.login-theme-error, .register-theme-error {
+  color: #fff;
+  background: #111;
+  font-size: 1rem;
+  font-weight: 900;
+  padding: 12px;
+  border: 3px solid #e1063c;
+  border-radius: 0;
+  text-align: center;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.login-theme-btn, .register-theme-btn {
+  background: #fff;
+  color: #111;
+  border: 4px solid #111;
+  border-radius: 0;
+  font-size: 1.2rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  padding: 18px 0;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 8px;
+  transition: background 0.15s, color 0.15s, transform 0.1s;
+}
+.login-theme-btn:hover, .register-theme-btn:hover {
+  background: #e1063c;
+  color: #fff;
+  transform: scale(0.98);
+}
+
+.login-theme-switch, .register-theme-switch {
+  background: #e1063c;
+  color: #fff;
+  border: 3px solid #111;
+  border-radius: 0;
+  font-size: 1rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 12px 0;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 18px;
+  transition: background 0.15s, color 0.15s, transform 0.1s;
+}
+.login-theme-switch:hover, .register-theme-switch:hover {
+  background: #fff;
+  color: #111;
+  transform: scale(0.98);
+}
+
+@media (max-width: 600px) {
+  .login-theme-card, .register-theme-card {
+    padding: 24px 8px 24px 8px;
+  }
+  .login-theme-title, .register-theme-title {
+    font-size: 1.3rem;
+  }
+} 
