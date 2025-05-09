@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
 
 :root {
@@ -50,17 +54,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
   color: var(--text-primary);
   line-height: 1.5;
-
-  /* Subtle Animated Grid Pattern Background */
-  --grid-color: rgba(191, 219, 254, 0.3); /* Light blue grid lines with low opacity */
-  --grid-size: 50px; /* Size of the grid squares */
-  background-color: #F0F9FF; /* Very light blue base */
-  background-image:
-    linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
-  background-size: var(--grid-size) var(--grid-size);
-  animation: moveGrid 5s linear infinite; /* Slower animation */
-  overflow-x: hidden; /* Prevent horizontal scrollbar from animation */
+  background: #fff;
+  overflow-x: hidden;
 }
 
 code {
@@ -182,3 +177,19 @@ select:focus {
 .p-2 { padding: var(--spacing-md); }
 .p-3 { padding: var(--spacing-lg); }
 .p-4 { padding: var(--spacing-xl); }
+
+.fullpage-grid-bg {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  background-size: 40px 40px;
+  background-image:
+    linear-gradient(to right, #e4e4e7 1px, transparent 1px),
+    linear-gradient(to bottom, #e4e4e7 1px, transparent 1px);
+  mask-image: radial-gradient(ellipse at center, transparent 20%, black 100%);
+  -webkit-mask-image: radial-gradient(ellipse at center, transparent 20%, black 100%);
+  opacity: 0.28;
+}

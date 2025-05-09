@@ -1,4 +1,4 @@
-from mongoengine import Document, StringField, EmailField, DateTimeField, BooleanField, ListField
+from mongoengine import Document, StringField, EmailField, DateTimeField, BooleanField, ListField, FileField
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -18,6 +18,8 @@ class User(Document):
     department = StringField(required=False)
     office_hours = StringField(required=False)
     office_location = StringField(required=False)
+
+    profile_image = FileField(required=False)
 
     meta = {
         'collection': 'users',

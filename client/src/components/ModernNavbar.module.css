@@ -1,0 +1,139 @@
+.navbar {
+  width: 100%;
+  background: rgba(255,255,255,0.95);
+  box-shadow: 0 4px 24px rgba(25, 118, 210, 0.08), 0 1.5px 8px rgba(34,34,34,0.04);
+  border-radius: 0 0 24px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  height: 68px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(8px);
+  transition: box-shadow 0.18s;
+}
+
+.homeBtn, .logoutBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  color: #1976D2;
+  border: 1.5px solid #e3eafc;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 8px 20px;
+  cursor: pointer;
+  box-shadow: none;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.homeBtn:hover, .logoutBtn:hover {
+  background: #e3eafc;
+  color: #1256a3;
+}
+
+.logoutBtn {
+  color: #fff;
+  background: #1976D2;
+  border: none;
+}
+.logoutBtn:hover {
+  background: #1256a3;
+  color: #fff;
+}
+
+.centerContent {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+}
+.avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #1976D2;
+  background: #e3eafc;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
+  transition: box-shadow 0.18s;
+}
+.avatarIcon {
+  color: #1976D2;
+  background: #e3eafc;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #1976D2;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
+}
+.avatar:hover, .avatarIcon:hover {
+  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.16);
+}
+.userName {
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: #1976D2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.portalLabel {
+  color: #888;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+.icon {
+  display: inline-block;
+  vertical-align: middle;
+}
+.hideMobile {
+  display: inline;
+}
+
+@media (max-width: 900px) {
+  .navbar {
+    padding: 0 10px;
+    height: 56px;
+  }
+  .centerContent {
+    gap: 10px;
+  }
+  .userName {
+    font-size: 1rem;
+  }
+  .portalLabel {
+    font-size: 0.95rem;
+  }
+}
+@media (max-width: 600px) {
+  .navbar {
+    flex-direction: column;
+    height: auto;
+    padding: 8px 2vw;
+    border-radius: 0 0 16px 16px;
+    gap: 8px;
+  }
+  .centerContent {
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+  }
+  .hideMobile {
+    display: none;
+  }
+  .homeBtn, .logoutBtn {
+    padding: 8px 12px;
+    font-size: 0.98rem;
+  }
+} 

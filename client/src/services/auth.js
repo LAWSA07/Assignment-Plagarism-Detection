@@ -86,14 +86,6 @@ authApi.interceptors.response.use(
   }
 );
 
-// Helper function to handle both /api and non-/api routes
-const createEndpointUrl = (endpoint) => {
-  const baseUrl = getBaseDomain();
-  // Remove any leading slash from endpoint
-  const cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
-  return `${baseUrl}/${cleanEndpoint}`;
-};
-
 export const register = async (userData) => {
   try {
     console.log('Registering user:', userData);

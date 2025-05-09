@@ -1,52 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import './Dashboard.css';
+import { FaUserCircle, FaEnvelope, FaBuilding, FaClock, FaMapMarkerAlt } from 'react-icons/fa';
 
-const ProfessorProfile = () => {
-    const [profile, setProfile] = useState(null);
+const ProfessorProfile = ({ profile, setProfile, loading, error, fetchProfile }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState({
-        first_name: '',
-        last_name: '',
+        firstName: '',
+        lastName: '',
         email: '',
         department: '',
-        office_hours: '',
-        office_location: ''
+        officeHours: '',
+        officeLocation: ''
     });
-    const [error, setError] = useState('');
-    const [isLoading, setIsLoading] = useState(true);
+    const [localError, setLocalError] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
-        fetchProfile();
-    }, []);
-
-    const fetchProfile = async () => {
-        try {
-            const response = await fetch('http://localhost:5000/api/professor/profile', {
-                credentials: 'include'
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch profile');
-            }
-
-            const data = await response.json();
-            setProfile(data);
+        if (profile) {
             setEditForm({
-                first_name: data.first_name || '',
-                last_name: data.last_name || '',
-                email: data.email || '',
-                department: data.department || '',
-                office_hours: data.office_hours || '',
-                office_location: data.office_location || ''
+                firstName: profile.firstName || '',
+                lastName: profile.lastName || '',
+                email: profile.email || '',
+                department: profile.department || '',
+                officeHours: profile.officeHours || '',
+                officeLocation: profile.officeLocation || ''
             });
-        } catch (error) {
-            console.error('Error fetching profile:', error);
-            setError('Failed to load profile');
-        } finally {
-            setIsLoading(false);
         }
-    };
+    }, [profile]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -59,7 +39,7 @@ const ProfessorProfile = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSaving(true);
-        setError('');
+        setLocalError('');
 
         try {
             const response = await fetch('http://localhost:5000/api/professor/profile/update', {
@@ -76,27 +56,52 @@ const ProfessorProfile = () => {
                 throw new Error(errorData.message || 'Failed to update profile');
             }
 
-            const updatedProfile = await response.json();
-            setProfile(updatedProfile);
+            const updatedData = await response.json();
+            if (!updatedData.success || !updatedData.profile) throw new Error('Failed to update profile');
+            setProfile(updatedData.profile);
             setIsEditing(false);
+            if (fetchProfile) fetchProfile();
         } catch (error) {
             console.error('Error updating profile:', error);
-            setError(error.message || 'Failed to update profile');
+            setLocalError(error.message || 'Failed to update profile');
         } finally {
             setIsSaving(false);
         }
     };
 
-    if (isLoading) {
-        return <div className="loading">Loading profile...</div>;
+    // Simulated quick stats (replace with real data if available)
+    const stats = [
+        { label: 'Assignments', value: profile?.assignmentsCount || 0 },
+        { label: 'Students', value: profile?.studentsCount || 0 },
+    ];
+
+    // Loading skeleton
+    if (loading) {
+        return (
+            <div className="profile-container">
+                <div className="profile-header">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+                        <div className="profile-avatar-skeleton" style={{ width: 64, height: 64, borderRadius: '50%', background: '#e3eafc', marginRight: 24 }} />
+                        <div>
+                            <div className="skeleton" style={{ width: 120, height: 24, background: '#e3eafc', borderRadius: 8, marginBottom: 8 }} />
+                            <div className="skeleton" style={{ width: 80, height: 16, background: '#e3eafc', borderRadius: 8 }} />
+                        </div>
+                    </div>
+                </div>
+                <div className="card" style={{ minHeight: 180 }}>
+                    <div className="skeleton" style={{ width: '100%', height: 24, background: '#e3eafc', borderRadius: 8, marginBottom: 16 }} />
+                    <div className="skeleton" style={{ width: '100%', height: 24, background: '#e3eafc', borderRadius: 8, marginBottom: 16 }} />
+                    <div className="skeleton" style={{ width: '100%', height: 24, background: '#e3eafc', borderRadius: 8 }} />
+                </div>
+            </div>
+        );
     }
 
-    if (error) {
+    if (error || localError) {
         return (
             <div className="error-container">
                 <h2>Error</h2>
-                <p>{error}</p>
-                <button onClick={fetchProfile}>Try Again</button>
+                <p>{error || localError}</p>
             </div>
         );
     }
@@ -104,173 +109,136 @@ const ProfessorProfile = () => {
     return (
         <div className="profile-container">
             <div className="profile-header">
-                <h2>Professor Profile</h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+                    {/* Profile Avatar */}
+                    {profile?.profileImage ? (
+                        <img src={profile.profileImage} alt="Profile" className="profile-avatar" style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid #1976D2' }} />
+                    ) : (
+                        <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#e3eafc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, color: '#1976D2', border: '2px solid #1976D2' }}>
+                            <FaUserCircle />
+                        </div>
+                    )}
+                    <div>
+                        <h2 style={{ margin: 0, fontWeight: 800, fontSize: '2rem', color: '#1976D2' }}>{profile.firstName} {profile.lastName}</h2>
+                        <div style={{ color: '#888', fontWeight: 500, fontSize: '1.1rem' }}>Professor</div>
+                    </div>
+                </div>
                 {!isEditing && (
-                    <button
-                        className="edit-btn"
-                        onClick={() => setIsEditing(true)}
-                    >
+                    <button className="edit-btn" onClick={() => setIsEditing(true)}>
                         Edit Profile
                     </button>
                 )}
             </div>
-
-            {isEditing ? (
-                <form onSubmit={handleSubmit} className="profile-form">
-                    <div className="form-group">
-                        <label htmlFor="first_name">First Name</label>
-                        <input
-                            type="text"
-                            id="first_name"
-                            name="first_name"
-                            value={editForm.first_name}
-                            onChange={handleInputChange}
-                            required
-                        />
+            {/* Quick Stats */}
+            <div className="stats-container" style={{ marginBottom: 32 }}>
+                {stats.map(stat => (
+                    <div className="stat-card" key={stat.label}>
+                        <div className="stat-label">{stat.label}</div>
+                        <div className="stat-number">{stat.value}</div>
                     </div>
-
-                    <div className="form-group">
-                        <label htmlFor="last_name">Last Name</label>
-                        <input
-                            type="text"
-                            id="last_name"
-                            name="last_name"
-                            value={editForm.last_name}
-                            onChange={handleInputChange}
-                            required
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label htmlFor="email">Email</label>
-                        <input
-                            type="email"
-                            id="email"
-                            name="email"
-                            value={editForm.email}
-                            onChange={handleInputChange}
-                            required
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label htmlFor="department">Department</label>
-                        <input
-                            type="text"
-                            id="department"
-                            name="department"
-                            value={editForm.department}
-                            onChange={handleInputChange}
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label htmlFor="office_hours">Office Hours</label>
-                        <textarea
-                            id="office_hours"
-                            name="office_hours"
-                            value={editForm.office_hours}
-                            onChange={handleInputChange}
-                            rows="3"
-                            placeholder="e.g., Mon: 10-12, Wed: 2-4"
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label htmlFor="office_location">Office Location</label>
-                        <input
-                            type="text"
-                            id="office_location"
-                            name="office_location"
-                            value={editForm.office_location}
-                            onChange={handleInputChange}
-                            placeholder="e.g., Building A, Room 123"
-                        />
-                    </div>
-
-                    <div className="form-actions">
-                        <button
-                            type="button"
-                            className="cancel-btn"
-                            onClick={() => {
-                                setIsEditing(false);
-                                setEditForm({
-                                    first_name: profile.first_name || '',
-                                    last_name: profile.last_name || '',
-                                    email: profile.email || '',
-                                    department: profile.department || '',
-                                    office_hours: profile.office_hours || '',
-                                    office_location: profile.office_location || ''
-                                });
-                            }}
-                            disabled={isSaving}
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            className="save-btn"
-                            disabled={isSaving}
-                        >
-                            {isSaving ? 'Saving...' : 'Save Changes'}
-                        </button>
-                    </div>
-                </form>
-            ) : (
-                <div className="profile-details">
-                    <div className="profile-section">
-                        <h3>Personal Information</h3>
-                        <div className="info-grid">
-                            <div className="info-item">
-                                <span className="label">Name:</span>
-                                <span className="value">{profile.first_name} {profile.last_name}</span>
-                            </div>
-                            <div className="info-item">
-                                <span className="label">Email:</span>
-                                <span className="value">{profile.email}</span>
-                            </div>
-                            <div className="info-item">
-                                <span className="label">Department:</span>
-                                <span className="value">{profile.department || 'Not specified'}</span>
-                            </div>
+                ))}
+            </div>
+            {/* Info Card */}
+            <div className="card">
+                {isEditing ? (
+                    <form onSubmit={handleSubmit} className="profile-form">
+                        <div className="form-group">
+                            <label htmlFor="firstName">First Name</label>
+                            <input
+                                type="text"
+                                id="firstName"
+                                name="firstName"
+                                value={editForm.firstName}
+                                onChange={handleInputChange}
+                                required
+                            />
                         </div>
-                    </div>
-
-                    <div className="profile-section">
-                        <h3>Contact Information</h3>
-                        <div className="info-grid">
-                            <div className="info-item">
-                                <span className="label">Office Hours:</span>
-                                <span className="value">{profile.office_hours || 'Not specified'}</span>
-                            </div>
-                            <div className="info-item">
-                                <span className="label">Office Location:</span>
-                                <span className="value">{profile.office_location || 'Not specified'}</span>
-                            </div>
+                        <div className="form-group">
+                            <label htmlFor="lastName">Last Name</label>
+                            <input
+                                type="text"
+                                id="lastName"
+                                name="lastName"
+                                value={editForm.lastName}
+                                onChange={handleInputChange}
+                                required
+                            />
                         </div>
-                    </div>
-
-                    <div className="profile-section">
-                        <h3>Statistics</h3>
-                        <div className="info-grid">
-                            <div className="info-item">
-                                <span className="label">Active Assignments:</span>
-                                <span className="value">{profile.active_assignments || 0}</span>
-                            </div>
-                            <div className="info-item">
-                                <span className="label">Total Students:</span>
-                                <span className="value">{profile.total_students || 0}</span>
-                            </div>
-                            <div className="info-item">
-                                <span className="label">Member Since:</span>
-                                <span className="value">
-                                    {new Date(profile.created_at).toLocaleDateString()}
-                                </span>
-                            </div>
+                        <div className="form-group">
+                            <label htmlFor="email">Email</label>
+                            <input
+                                type="email"
+                                id="email"
+                                name="email"
+                                value={editForm.email}
+                                onChange={handleInputChange}
+                                required
+                            />
                         </div>
+                        <div className="form-group">
+                            <label htmlFor="department">Department</label>
+                            <input
+                                type="text"
+                                id="department"
+                                name="department"
+                                value={editForm.department}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="officeHours">Office Hours</label>
+                            <textarea
+                                id="officeHours"
+                                name="officeHours"
+                                value={editForm.officeHours}
+                                onChange={handleInputChange}
+                                rows="3"
+                                placeholder="e.g., Mon: 10-12, Wed: 2-4"
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="officeLocation">Office Location</label>
+                            <input
+                                type="text"
+                                id="officeLocation"
+                                name="officeLocation"
+                                value={editForm.officeLocation}
+                                onChange={handleInputChange}
+                                placeholder="e.g., Building A, Room 123"
+                            />
+                        </div>
+                        <div className="form-actions">
+                            <button
+                                type="button"
+                                className="cancel-btn"
+                                onClick={() => {
+                                    setIsEditing(false);
+                                    setEditForm({
+                                        firstName: profile.firstName || '',
+                                        lastName: profile.lastName || '',
+                                        email: profile.email || '',
+                                        department: profile.department || '',
+                                        officeHours: profile.officeHours || '',
+                                        officeLocation: profile.officeLocation || ''
+                                    });
+                                }}
+                            >
+                                Cancel
+                            </button>
+                            <button type="submit" className="save-btn" disabled={isSaving}>
+                                {isSaving ? 'Saving...' : 'Save Changes'}
+                            </button>
+                        </div>
+                    </form>
+                ) : (
+                    <div className="info-grid">
+                        <div className="info-item"><FaEnvelope className="label" /> <span className="label">Email:</span> <span className="value">{profile.email}</span></div>
+                        <div className="info-item"><FaBuilding className="label" /> <span className="label">Department:</span> <span className="value">{profile.department}</span></div>
+                        <div className="info-item"><FaClock className="label" /> <span className="label">Office Hours:</span> <span className="value">{profile.officeHours}</span></div>
+                        <div className="info-item"><FaMapMarkerAlt className="label" /> <span className="label">Office Location:</span> <span className="value">{profile.officeLocation}</span></div>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 };

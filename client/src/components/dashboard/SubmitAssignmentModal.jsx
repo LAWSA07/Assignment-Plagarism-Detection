@@ -93,6 +93,16 @@ const SubmitAssignmentModal = ({ isOpen, onClose, assignment, onSubmissionComple
     }
   };
 
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setAnswerFile(null);
+      setError('');
+      setProcessingStatus(null);
+      setProcessingResults(null);
+    }
+  }, [isOpen]);
+
   const renderProcessingStatus = () => {
     if (!processingStatus) return null;
 
@@ -132,49 +142,50 @@ const SubmitAssignmentModal = ({ isOpen, onClose, assignment, onSubmissionComple
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <div className="modal-header">
-          <h2>Submit Assignment</h2>
-          <button className="close-button" onClick={onClose}>&times;</button>
+    <div className="modal-overlay minimal-modal-overlay">
+      <div className="modal-content minimal-modal-content">
+        <div className="modal-header minimal-modal-header">
+          <h2 className="modal-title">Submit Assignment</h2>
+          <button className="close-button minimal-close-button" onClick={onClose}>&times;</button>
         </div>
 
-        <div className="assignment-details">
+        <div className="assignment-details minimal-assignment-details">
           <h3>{assignment.name}</h3>
           <p>{assignment.course}</p>
           {assignment.description && (
-            <div className="assignment-description">
+            <div className="assignment-description minimal-assignment-description">
               <h4>Description:</h4>
               <p>{assignment.description}</p>
             </div>
           )}
         </div>
 
-        {error && <div className="error-message">{error}</div>}
+        {error && <div className="error-message minimal-error-message">{error}</div>}
 
         {renderProcessingStatus()}
 
-        <form onSubmit={handleSubmit} className="submit-assignment-form">
-          <div className="form-group">
+        <form onSubmit={handleSubmit} className="submit-assignment-form minimal-form">
+          <div className="form-group minimal-form-group">
             <label>Upload Your Answer</label>
-            <div className="file-upload">
+            <div className="file-upload minimal-file-upload">
               <input
                 type="file"
                 onChange={handleFileChange}
                 accept=".pdf"
                 id="answerFile"
+                className="minimal-input"
               />
-              <label htmlFor="answerFile" className="file-upload-label">
+              <label htmlFor="answerFile" className="file-upload-label minimal-btn minimal-btn-cancel" style={{marginTop: 8}}>
                 {answerFile ? answerFile.name : 'Choose File'}
               </label>
               <span className="file-format">Supported format: PDF only</span>
             </div>
           </div>
 
-          <div className="modal-actions">
+          <div className="modal-actions minimal-modal-actions">
             <button
               type="button"
-              className="cancel-btn"
+              className="cancel-btn minimal-btn minimal-btn-cancel"
               onClick={onClose}
               disabled={isSubmitting || processingStatus === 'Processing'}
             >
@@ -182,7 +193,7 @@ const SubmitAssignmentModal = ({ isOpen, onClose, assignment, onSubmissionComple
             </button>
             <button
               type="submit"
-              className="submit-btn"
+              className="submit-btn minimal-btn minimal-btn-primary"
               disabled={isSubmitting || !answerFile || processingStatus === 'Processing'}
             >
               {isSubmitting ? 'Submitting...' : 'Submit Assignment'}

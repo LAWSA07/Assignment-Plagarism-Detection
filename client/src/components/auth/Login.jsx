@@ -139,6 +139,13 @@ const Login = () => {
   return (
     <div className="theme-center" style={{ minHeight: '100vh', background: '#FAF6F2' }}>
       <div className="theme-card" style={{ maxWidth: 420, width: '100%', textAlign: 'center' }}>
+        <button
+          className="theme-btn minimal-btn minimal-btn-cancel"
+          style={{ marginBottom: 18, background: '#fff', color: '#1976D2', border: '1.5px solid #e3eafc', fontWeight: 700 }}
+          onClick={() => navigate('/')}
+        >
+          ← Back to Home
+        </button>
         <h2 style={{ fontWeight: 800, fontSize: '2rem', color: '#222', marginBottom: 8 }}>{isStudent ? 'Student Portal' : 'Professor Portal'}</h2>
         <p style={{ color: '#444', fontSize: '1.1rem', marginBottom: 24 }}>Enter your credentials to access the system</p>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 24 }}>

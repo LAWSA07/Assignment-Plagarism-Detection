@@ -1,44 +1,86 @@
 import React from 'react';
 import ResizableNavbar from './ResizableNavbar';
+import HeroSection from './HeroSection';
+import TrustedByMarquee from './TrustedByMarquee';
+import StickyScrollRevealDemo from './sticky-scroll-reveal-demo';
+// import { motion } from "framer-motion"; // No longer needed
+
+const FEATURES = [
+  { icon: '⚡', title: 'Instant Plagiarism Check', desc: 'Get results in seconds with our high-performance AI engine.' },
+  { icon: '🔒', title: 'Secure & Private', desc: 'Your assignments and data are encrypted and never shared.' },
+  { icon: '📊', title: 'Detailed Reports', desc: 'Easy-to-read, actionable plagiarism reports for every submission.' },
+  { icon: '👩‍🏫', title: 'For Students & Professors', desc: 'Simple dashboards for both roles. No training required.' }
+];
 
 export default function HomePage() {
   return (
-    <div style={{ minHeight: '100vh', background: '#fff', fontFamily: 'Cal Sans, Arial, sans-serif', display: 'flex', flexDirection: 'column' }}>
-      {/* Clean Navbar */}
-      <ResizableNavbar fintech clean />
-      {/* Main Section */}
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', maxWidth: 1200, margin: '64px auto 0 auto', padding: '0 48px', gap: 64, flexWrap: 'wrap' }}>
-        {/* Left: Headline and CTA */}
-        <div style={{ flex: 1, minWidth: 340, maxWidth: 500, textAlign: 'left' }}>
-          <h1 style={{ fontWeight: 700, fontSize: '2.8rem', color: '#111', marginBottom: 32, lineHeight: 1.1, textAlign: 'center' }}>
-            Check Assignments for Plagiarism Instantly
-          </h1>
-          <p style={{ fontWeight: 400, fontSize: '1.15rem', color: '#222', marginBottom: 40, maxWidth: 420 }}>
-            PlagExit Edu helps colleges and institutions ensure academic integrity by detecting plagiarism in student assignments—whether copied from classmates or the web. Fast, accurate, and easy for both students and professors.
-          </p>
-          <div style={{ display: 'flex', gap: 18, marginBottom: 32 }}>
-            <a href="/login?portal=student" style={{ background: '#19C37D', color: '#fff', fontWeight: 600, fontSize: '1.08rem', borderRadius: 4, padding: '14px 36px', textDecoration: 'none', border: 'none', boxShadow: 'none', transition: 'background 0.18s' }}>Student Login</a>
-            <a href="/login?portal=professor" style={{ background: '#fff', color: '#19C37D', fontWeight: 600, fontSize: '1.08rem', borderRadius: 4, padding: '14px 36px', textDecoration: 'none', border: '2px solid #19C37D', boxShadow: 'none', transition: 'background 0.18s' }}>Professor Login</a>
-          </div>
+    <>
+      <div className="framer-bg-orb-green"></div>
+      {/* Green Arc SVG */}
+      <svg
+        className="framer-bg-arc-green"
+        width="100vw"
+        height="600"
+        viewBox="0 0 1440 600"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M0 400 Q 720 200 1440 400"
+          stroke="#27ae60"
+          strokeWidth="8"
+          fill="none"
+          opacity="0.18"
+          filter="url(#blur)"
+        />
+        <defs>
+          <filter id="blur" x="-20" y="0" width="1480" height="600">
+            <feGaussianBlur stdDeviation="8" />
+          </filter>
+        </defs>
+      </svg>
+      {/* Subtle Green Grid SVG */}
+      <svg
+        className="framer-bg-grid-green"
+        width="100vw"
+        height="100vh"
+        viewBox="0 0 1440 900"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <g opacity="0.08" stroke="#27ae60">
+          {Array.from({ length: 15 }).map((_, i) => (
+            <line key={i} x1={i * 100} y1="0" x2={i * 100} y2="900" />
+          ))}
+          {Array.from({ length: 10 }).map((_, i) => (
+            <line key={i} x1="0" y1={i * 100} x2="1440" y2={i * 100} />
+          ))}
+        </g>
+      </svg>
+      <div style={{ position: "relative", minHeight: '100vh', fontFamily: 'Inter, Cal Sans, Arial, sans-serif', display: 'flex', flexDirection: 'column', zIndex: 1 }}>
+        {/* <div className="fullpage-grid-bg" /> */}
+        <ResizableNavbar />
+        {/* News Banner */}
+        <div style={{ width: '100%', background: '#F6F6F6', color: '#222', fontWeight: 700, fontSize: 13, letterSpacing: 1, textTransform: 'uppercase', textAlign: 'center', padding: '8px 0', borderBottom: '1px solid #eee' }}>
+          🚀 New: AI-powered plagiarism detection now faster than ever!
         </div>
-        {/* Right: Glassmorphic Card with Larger Architecture Diagram */}
-        <div style={{ flex: 1, minWidth: 340, maxWidth: 600, display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
-          <div style={{ position: 'relative', background: 'rgba(255,255,255,0.92)', borderRadius: 12, border: '1.5px solid #eee', padding: '40px 36px 32px 36px', minWidth: 320, maxWidth: 560, textAlign: 'left', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
-            {/* Larger architecture diagram image */}
-            <img src="/architecture.png" alt="Architecture Diagram" style={{ width: '100%', maxHeight: 990, objectFit: 'contain', borderRadius: 8, marginBottom: 18, border: '1px solid #eee', background: '#fafafa' }} />
-          </div>
+        <HeroSection />
+        <TrustedByMarquee />
+        {/* Features Section - replaced with StickyScrollRevealDemo */}
+        <div style={{ margin: '48px 0' }}>
+          <StickyScrollRevealDemo />
         </div>
+        {/* Minimal Footer */}
+        <footer style={{ marginTop: 'auto', background: '#fff', borderTop: '1.5px solid #eee', padding: '24px 0 12px 0', textAlign: 'center', fontSize: '1rem', color: '#888', fontFamily: 'Inter, Cal Sans, Arial, sans-serif' }}>
+          <div style={{ marginBottom: 6 }}>
+            &copy; {new Date().getFullYear()} PlagExit Edu
+          </div>
+          <div>
+            <a href="/contact" style={{ color: '#1976D2', textDecoration: 'underline', margin: '0 12px' }}>Contact</a>
+            <a href="/how-it-works" style={{ color: '#1976D2', textDecoration: 'underline', margin: '0 12px' }}>How It Works</a>
+          </div>
+        </footer>
       </div>
-      {/* Minimal Footer */}
-      <footer style={{ marginTop: 'auto', background: '#fff', borderTop: '1.5px solid #eee', padding: '24px 0 12px 0', textAlign: 'center', fontSize: '1rem', color: '#888', fontFamily: 'Cal Sans, Arial, sans-serif' }}>
-        <div style={{ marginBottom: 6 }}>
-          &copy; {new Date().getFullYear()} PlagExit Edu
-        </div>
-        <div>
-          <a href="/contact" style={{ color: '#19C37D', textDecoration: 'underline', margin: '0 12px' }}>Contact</a>
-          <a href="/how-it-works" style={{ color: '#19C37D', textDecoration: 'underline', margin: '0 12px' }}>How It Works</a>
-        </div>
-      </footer>
-    </div>
+    </>
   );
 } 

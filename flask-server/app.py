@@ -8,6 +8,9 @@ from models.submission import Submission
 from routes.assignments import assignments_bp
 from routes.auth import auth_bp
 from routes.users import users_bp
+from routes.library import library_bp
+from routes.timetable import timetable_bp
+from routes.notifications import notifications_bp
 from config import Config
 import os
 import logging
@@ -130,6 +133,9 @@ except Exception as e:
 app.register_blueprint(assignments_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(users_bp)
+app.register_blueprint(library_bp)
+app.register_blueprint(timetable_bp)
+app.register_blueprint(notifications_bp)
 
 # Non-prefixed route handlers (to support both /api and non-/api routes)
 # Auth routes

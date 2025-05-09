@@ -174,16 +174,16 @@ const CreateAssignmentModal = ({ isOpen, onClose, onAssignmentCreated }) => {
 
   return (
     <div
-      className="modal-overlay"
+      className="modal-overlay minimal-modal-overlay"
       role="dialog"
       aria-labelledby={titleId}
       aria-modal="true"
     >
-      <div className="modal-content">
-        <h2 id={titleId}>Create New Assignment</h2>
+      <div className="modal-content minimal-modal-content">
+        <h2 id={titleId} className="modal-title">Create New Assignment</h2>
         <button
           type="button"
-          className="close-button"
+          className="close-button minimal-close-button"
           onClick={onClose}
           aria-label="Close modal"
         >
@@ -195,8 +195,9 @@ const CreateAssignmentModal = ({ isOpen, onClose, onAssignmentCreated }) => {
           noValidate
           encType="multipart/form-data"
           aria-busy={isSubmitting}
+          className="minimal-form"
         >
-          <div className="form-group">
+          <div className="form-group minimal-form-group">
             <label htmlFor="name">Assignment Name</label>
             <input
               type="text"
@@ -205,10 +206,11 @@ const CreateAssignmentModal = ({ isOpen, onClose, onAssignmentCreated }) => {
               value={formData.name}
               onChange={handleInputChange}
               placeholder="Enter assignment name"
+              className="minimal-input"
             />
           </div>
 
-          <div className="form-group">
+          <div className="form-group minimal-form-group">
             <label htmlFor="course">Course</label>
             <input
               type="text"
@@ -217,10 +219,11 @@ const CreateAssignmentModal = ({ isOpen, onClose, onAssignmentCreated }) => {
               value={formData.course}
               onChange={handleInputChange}
               placeholder="Enter course name"
+              className="minimal-input"
             />
           </div>
 
-          <div className="form-group">
+          <div className="form-group minimal-form-group">
             <label htmlFor="sections">Sections</label>
             <select
               id="sections"
@@ -228,7 +231,7 @@ const CreateAssignmentModal = ({ isOpen, onClose, onAssignmentCreated }) => {
               multiple
               value={formData.sections}
               onChange={handleSectionChange}
-              className="section-select"
+              className="section-select minimal-select"
             >
               {availableSections.map(section => (
                 <option key={section.id} value={section.id}>
@@ -239,7 +242,7 @@ const CreateAssignmentModal = ({ isOpen, onClose, onAssignmentCreated }) => {
             <small className="help-text">Hold Ctrl/Cmd to select multiple sections</small>
           </div>
 
-          <div className="form-group">
+          <div className="form-group minimal-form-group">
             <label htmlFor="description">Description</label>
             <textarea
               id="description"
@@ -248,10 +251,11 @@ const CreateAssignmentModal = ({ isOpen, onClose, onAssignmentCreated }) => {
               onChange={handleInputChange}
               placeholder="Enter assignment description"
               rows="4"
+              className="minimal-input"
             />
           </div>
 
-          <div className="form-group">
+          <div className="form-group minimal-form-group">
             <label htmlFor="due_date">Due Date</label>
             <input
               type="datetime-local"
@@ -259,28 +263,30 @@ const CreateAssignmentModal = ({ isOpen, onClose, onAssignmentCreated }) => {
               name="due_date"
               value={formData.due_date}
               onChange={handleInputChange}
+              className="minimal-input"
             />
           </div>
 
-          <div className="form-group">
+          <div className="form-group minimal-form-group">
             <label htmlFor="question_file">Question File (PDF only)</label>
             <input
               type="file"
               id="question_file"
               accept=".pdf"
               onChange={handleFileChange}
-              className="file-input"
+              className="file-input minimal-input"
             />
           </div>
 
-          {error && <div className="error-message">{error}</div>}
+          {error && <div className="error-message minimal-error-message">{error}</div>}
 
-          <div className="modal-actions">
+          <div className="modal-actions minimal-modal-actions">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
               aria-label="Cancel assignment creation"
+              className="theme-btn minimal-btn minimal-btn-cancel"
             >
               Cancel
             </button>
@@ -288,6 +294,7 @@ const CreateAssignmentModal = ({ isOpen, onClose, onAssignmentCreated }) => {
               type="submit"
               disabled={isSubmitting}
               aria-label="Create assignment"
+              className="theme-btn minimal-btn minimal-btn-primary"
             >
               {isSubmitting ? 'Creating...' : 'Create Assignment'}
             </button>

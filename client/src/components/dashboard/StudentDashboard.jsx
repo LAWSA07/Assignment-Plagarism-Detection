@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import SubmitAssignmentModal from './SubmitAssignmentModal';
 import './Dashboard.css';
 import './DashboardTheme.css';
 import '../LightTheme.css';
+import { FaBook, FaCalendarAlt, FaChalkboardTeacher, FaBell, FaMoneyCheckAlt, FaUserCircle, FaRegLifeRing, FaClipboardList, FaSignOutAlt } from 'react-icons/fa';
+import LibraryPage from '../student/LibraryPage';
+import TimetablePage from '../student/TimetablePage';
+import NotificationsPage from '../student/NotificationsPage';
+import SupportPage from '../student/SupportPage';
+import ProfilePage from '../student/ProfilePage';
 
 const StudentDashboard = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [activeTab, setActiveTab] = useState('assignments');
     const [assignments, setAssignments] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -18,6 +25,7 @@ const StudentDashboard = () => {
         status: 'All Statuses',
         course: 'All Courses'
     });
+    const [user, setUser] = useState(null);
 
     useEffect(() => {
         verifyAndLoadData();
@@ -26,23 +34,18 @@ const StudentDashboard = () => {
     const verifyAndLoadData = async () => {
         try {
             const user = JSON.parse(localStorage.getItem('user'));
+            setUser(user);
             if (!user) {
-                console.log('No user found, redirecting to login');
                 navigate('/login');
                 return;
             }
-
-            // Check if user is a student
             if (user.user_type !== 'student') {
-                console.log('User is not a student, redirecting to professor dashboard');
                 navigate('/professor/dashboard');
                 return;
             }
-
             await verifySession();
         } catch (error) {
             setError('Failed to verify session. Please try logging in again.');
-            console.error('Session verification error:', error);
             navigate('/login');
         }
     };
@@ -233,28 +236,79 @@ const StudentDashboard = () => {
     }
 
     return (
-        <div className="theme-center" style={{ minHeight: '100vh', background: '#FAF6F2' }}>
-            <div className="theme-card" style={{ maxWidth: 1200, width: '100%' }}>
+        <div style={{ minHeight: '100vh' }}>
+            {/* Top Bar */}
+            <div className="top-bar">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    {user?.profileImage ? (
+                        <img
+                            src={user.profileImage}
+                            alt="Profile"
+                            className="profile-avatar"
+                        />
+                    ) : (
+                        <FaUserCircle size={32} color="#1976D2" />
+                    )}
+                    <span style={{ fontWeight: 700, fontSize: '1.1rem', color: '#1976D2' }}>{user?.firstName || 'Student'} {user?.lastName || ''}</span>
+                    <span style={{ color: '#888', fontSize: '0.95rem', marginLeft: 8 }}>Student Portal</span>
+                </div>
+                <button className="logout-btn" onClick={handleLogout}>
+                    <FaSignOutAlt /> Logout
+                </button>
+            </div>
+            <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+                {/* Sidebar */}
+                <div className="sidebar">
+                    <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0 24px 24px 24px' }}>
+                            {user?.profileImage ? (
+                                <img
+                                    src={user.profileImage}
+                                    alt="Profile"
+                                    className="profile-avatar"
+                                />
+                            ) : (
+                                <FaUserCircle size={28} color="#1976D2" />
+                            )}
+                            <div>
+                                <div style={{ fontWeight: 700, fontSize: '1.05rem', color: '#222' }}>{user?.firstName || 'Student'}</div>
+                                <div style={{ fontSize: '0.92rem', color: '#888' }}>Dashboard</div>
+                            </div>
+                        </div>
+                        <div style={{ padding: '0 12px' }}>
+                            <div style={{ color: '#888', fontWeight: 600, fontSize: 13, margin: '16px 0 4px 8px', letterSpacing: 1 }}>MAIN</div>
+                            <SidebarLink icon={<FaClipboardList />} label="Assignments" onClick={() => navigate('/student/dashboard')} active={location.pathname.startsWith('/student/dashboard')} />
+                            <SidebarLink icon={<FaBook />} label="Library" onClick={() => navigate('/student/library')} active={location.pathname.startsWith('/student/library')} />
+                            <SidebarLink icon={<FaCalendarAlt />} label="Timetable" onClick={() => navigate('/student/timetable')} active={location.pathname.startsWith('/student/timetable')} />
+                            <SidebarLink icon={<FaBell />} label="Notifications" onClick={() => navigate('/student/notifications')} active={location.pathname.startsWith('/student/notifications')} />
+                            <div style={{ color: '#888', fontWeight: 600, fontSize: 13, margin: '20px 0 4px 8px', letterSpacing: 1 }}>SUPPORT</div>
+                            <SidebarLink icon={<FaRegLifeRing />} label="Support" onClick={() => navigate('/student/support')} active={location.pathname.startsWith('/student/support')} />
+                            <SidebarLink icon={<FaUserCircle />} label="Profile" onClick={() => navigate('/student/profile')} active={location.pathname.startsWith('/student/profile')} />
+                        </div>
+                    </div>
+                </div>
+                {/* Main Content */}
+                <div className="theme-card" style={{ maxWidth: 1200, width: '100%', margin: '32px auto', minHeight: 600 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
                     <h1 style={{ fontWeight: 800, fontSize: '2.2rem', color: '#222' }}>Student Dashboard</h1>
                     <button className="theme-btn" onClick={handleLogout}>Logout</button>
                 </div>
                 <div style={{ display: 'flex', gap: 16, marginBottom: 32 }}>
-                    <button onClick={() => navigate('/student/dashboard')} className="theme-btn" style={{ background: '#FF914D', color: '#fff' }}>Student Portal</button>
-                    <button onClick={() => navigate('/professor/dashboard')} className="theme-btn" style={{ background: '#fff', color: '#FF914D', border: '2px solid #FF914D' }}>Professor Portal</button>
+                        <button onClick={() => navigate('/student/dashboard')} className="theme-btn" style={{ background: '#1976D2', color: '#fff' }}>Student Portal</button>
+                        <button onClick={() => navigate('/professor/dashboard')} className="theme-btn" style={{ background: '#fff', color: '#1976D2', border: '2px solid #1976D2' }}>Professor Portal</button>
                 </div>
                 <div style={{ display: 'flex', gap: 32, marginBottom: 32 }}>
                     <div className="card" style={{ flex: 1 }}>
                         <div style={{ color: '#888', fontWeight: 700 }}>Pending Assignments</div>
-                        <div style={{ fontWeight: 900, fontSize: '2rem', color: '#FF914D' }}>{stats.pendingAssignments}</div>
+                            <div style={{ fontWeight: 900, fontSize: '2rem', color: '#1976D2' }}>{stats.pendingAssignments}</div>
                     </div>
                     <div className="card" style={{ flex: 1 }}>
                         <div style={{ color: '#888', fontWeight: 700 }}>Completed Assignments</div>
-                        <div style={{ fontWeight: 900, fontSize: '2rem', color: '#FF914D' }}>{stats.completedAssignments}</div>
+                            <div style={{ fontWeight: 900, fontSize: '2rem', color: '#1976D2' }}>{stats.completedAssignments}</div>
                     </div>
                     <div className="card" style={{ flex: 1 }}>
                         <div style={{ color: '#888', fontWeight: 700 }}>Average Score</div>
-                        <div style={{ fontWeight: 900, fontSize: '2rem', color: '#FF914D' }}>{stats.averageScore}</div>
+                            <div style={{ fontWeight: 900, fontSize: '2rem', color: '#1976D2' }}>{stats.averageScore}</div>
                     </div>
                 </div>
                 <div style={{ marginBottom: 32 }}>
@@ -300,11 +354,11 @@ const StudentDashboard = () => {
                                         <td style={{ padding: 12 }}>{assignment.course}</td>
                                         <td style={{ padding: 12 }}>{new Date(assignment.due_date).toLocaleDateString()}</td>
                                         <td style={{ padding: 12 }}>
-                                            <span style={{ padding: '5px 10px', borderRadius: 12, fontSize: '0.95em', background: '#FF914D', color: '#fff', fontWeight: 700 }}>{assignment.status || 'Not Started'}</span>
+                                                <span style={{ padding: '5px 10px', borderRadius: 12, fontSize: '0.95em', background: '#1976D2', color: '#fff', fontWeight: 700 }}>{assignment.status || 'Not Started'}</span>
                                         </td>
                                         <td style={{ padding: 12 }}>
-                                            <div style={{ width: '100%', height: '8px', background: '#f0e9e0', borderRadius: 8, overflow: 'hidden' }}>
-                                                <div style={{ width: `${assignment.progress || 0}%`, height: '100%', background: '#FF914D', transition: 'width 0.3s' }} />
+                                                <div style={{ width: '100%', height: '8px', background: '#e3eafc', borderRadius: 8, overflow: 'hidden' }}>
+                                                    <div style={{ width: `${assignment.progress || 0}%`, height: '100%', background: '#1976D2', transition: 'width 0.3s' }} />
                                             </div>
                                             <span style={{ fontSize: '0.95em', color: '#888', marginTop: '5px', fontWeight: 700 }}>{assignment.progress || 0}%</span>
                                         </td>
@@ -331,9 +385,35 @@ const StudentDashboard = () => {
                         onSubmissionComplete={handleSubmissionComplete}
                     />
                 )}
+                    <Routes>
+                        <Route path="dashboard" element={<AssignmentsDashboardContent /* pass props as needed */ />} />
+                        <Route path="library" element={<LibraryPage />} />
+                        <Route path="timetable" element={<TimetablePage />} />
+                        <Route path="notifications" element={<NotificationsPage />} />
+                        <Route path="support" element={<SupportPage />} />
+                        <Route path="profile" element={<ProfilePage />} />
+                        <Route path="*" element={<Navigate to="dashboard" />} />
+                    </Routes>
+                </div>
             </div>
         </div>
     );
 };
+
+// Helper SidebarLink component
+function SidebarLink({ icon, label, onClick, active }) {
+    return (
+        <div onClick={onClick} className={`sidebar-link${active ? ' active' : ''}`}>
+            <span style={{ fontSize: 20 }}>{icon}</span>
+            <span>{label}</span>
+        </div>
+    );
+}
+
+// Extract assignments dashboard content to a component
+function AssignmentsDashboardContent(props) {
+    // ...copy the assignments dashboard JSX here (from the main content area)...
+    // Use props as needed for assignments, filters, etc.
+}
 
 export default StudentDashboard;

@@ -1,0 +1,112 @@
+.aceternity-hero-section {
+  width: 100%;
+  padding: 96px 0 64px 0;
+  background: transparent;
+  font-family: 'Inter', 'Cal Sans', Arial, sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+.background-lines-svg {
+  display: none;
+}
+.aceternity-hero-container {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  text-align: left;
+  padding: 0 16px;
+  gap: 48px;
+  position: relative;
+  z-index: 1;
+}
+.aceternity-hero-title {
+  font-size: 3rem;
+  font-weight: 900;
+  color: #111;
+  margin-bottom: 24px;
+  letter-spacing: -1.5px;
+  line-height: 1.08;
+}
+.aceternity-hero-desc {
+  font-size: 1.25rem;
+  color: #333;
+  font-weight: 400;
+  margin-bottom: 40px;
+  max-width: 600px;
+  line-height: 1.5;
+}
+.aceternity-hero-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 24px;
+}
+.aceternity-hero-btn {
+  display: inline-block;
+  font-size: 1.12rem;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 16px 44px;
+  text-decoration: none;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: background 0.18s, color 0.18s, border 0.18s;
+  box-shadow: 0 2px 12px rgba(34,34,34,0.08);
+}
+.aceternity-hero-btn-primary {
+  background: #1db954;
+  color: #fff;
+  border: none;
+}
+.aceternity-hero-btn-primary:hover {
+  background: #169c43;
+  color: #fff;
+}
+.aceternity-hero-btn-secondary {
+  background: #fff;
+  color: #111;
+  border: 2px solid #111;
+}
+.aceternity-hero-btn-secondary:hover {
+  background: #1db954;
+  color: #fff;
+  border-color: #1db954;
+}
+.aceternity-hero-image {
+  max-width: 320px;
+  width: 100%;
+  height: auto;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(25, 118, 210, 0.10);
+}
+@media (max-width: 800px) {
+  .aceternity-hero-container {
+    flex-direction: column !important;
+    gap: 32px !important;
+    text-align: center;
+  }
+}
+/* Animation */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: none; }
+}
+.animate-fade-in {
+  animation: fade-in 0.8s cubic-bezier(.4,1,.4,1) both;
+}
+.delay-100 {
+  animation-delay: 0.1s;
+}
+.delay-200 {
+  animation-delay: 0.2s;
+}
+@keyframes dashmove {
+  to {
+    stroke-dashoffset: 1000;
+  }
+}
+.grid-dot-bg-svg {
+  display: none;
+} 
