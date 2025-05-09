@@ -1,4 +1,4 @@
-import PyPDF2
+import os
 import io
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -6,6 +6,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 import logging
 import threading
 from models.submission import Submission
+from ml_models.ocr_processor import OCRProcessor
+import tempfile
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -14,6 +16,7 @@ logger = logging.getLogger(__name__)
 class DocumentProcessor:
     def __init__(self):
         self.vectorizer = TfidfVectorizer(stop_words='english')
+        self.ocr = OCRProcessor()  # Assumes env vars for credentials/processor
     
     def process_submission_async(self, submission_id):
         """Start asynchronous processing of a submission"""
@@ -59,21 +62,16 @@ class DocumentProcessor:
                 logger.error(f"Error updating submission status: {str(save_error)}")
     
     def _extract_text_from_pdf(self, pdf_data):
-        """Extract text directly from PDF using PyPDF2"""
+        """Extract text from PDF using Google Cloud Document AI"""
         try:
-            # Create a PDF reader object
-            pdf_file = io.BytesIO(pdf_data)
-            pdf_reader = PyPDF2.PdfReader(pdf_file)
-            
-            # Extract text from each page
-            extracted_text = []
-            for page in pdf_reader.pages:
-                text = page.extract_text()
-                if text:
-                    extracted_text.append(text)
-            
-            return '\n'.join(extracted_text)
-            
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+                tmp_file.write(pdf_data)
+                tmp_file_path = tmp_file.name
+            try:
+                text = self.ocr.extract_text_from_pdf(tmp_file_path)
+            finally:
+                os.remove(tmp_file_path)
+            return text
         except Exception as e:
             logger.error(f"Error in PDF text extraction: {str(e)}")
             raise

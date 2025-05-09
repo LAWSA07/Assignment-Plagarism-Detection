@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { register } from '../../services/auth';
 import './Auth.css';
 import './LoginTheme.css';
 import '../LightTheme.css';
@@ -24,9 +25,32 @@ const Register = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Implement registration logic
+    setError('');
+    setIsLoading(true);
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      await register({
+        email: formData.email,
+        password: formData.password,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        isStudent,
+        section: isStudent ? formData.section : undefined
+      });
+      // Optionally redirect or show success
+    } catch (err) {
+      setError(err.message || 'Failed to register. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
